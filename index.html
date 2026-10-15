@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>割り振りバトル</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#070b16;color:#cfe8ff;font-family:"Courier New",monospace;min-height:100vh}
+#app{max-width:480px;margin:0 auto;padding:14px}
+h1{font-size:20px;color:#0ff;text-shadow:0 0 8px #0ff;margin:6px 0 2px;letter-spacing:2px}
+.sub{color:#789;font-size:12px;margin-bottom:10px}
+.card{border:1px solid #1d4a6b;background:#0c1426;padding:10px;margin:8px 0;box-shadow:0 0 6px #0ff3 inset}
+button{font-family:inherit;font-size:15px;color:#0ff;background:#0a1830;border:1px solid #0ff;padding:10px 12px;margin:4px 4px 4px 0;cursor:pointer}
+button:active{background:#0ff;color:#000}
+button:disabled{color:#456;border-color:#345;cursor:not-allowed}
+button.main{border-color:#f0f;color:#f0f;font-weight:bold}
+button.main:active{background:#f0f;color:#000}
+.stage{display:block;width:100%;text-align:left;margin:6px 0}
+.row{display:flex;align-items:center;justify-content:space-between;margin:6px 0}
+.row .lbl{width:64px}
+.row .val{flex:1;text-align:center}
+.pm{width:44px;padding:8px 0;text-align:center}
+.pts{color:#ff0;font-weight:bold}
+.bar{height:12px;background:#122;border:1px solid #1d4a6b;margin:2px 0 6px}
+.bar>i{display:block;height:100%;background:#0f8;transition:width .3s}
+.bar.e>i{background:#f46}
+#log{height:200px;overflow-y:auto;border:1px solid #1d4a6b;background:#050a14;padding:6px;font-size:13px;line-height:1.5}
+.skill{display:block;width:100%;text-align:left}
+.skill.on{background:#0ff;color:#000}
+.win{color:#0f8;font-size:18px;font-weight:bold}
+.lose{color:#f46;font-size:18px;font-weight:bold}
+.small{font-size:12px;color:#789}
+.hint{color:#ff0;font-size:13px}
+.rule{color:#f0f;font-weight:bold}
+.star{color:#ff0;font-size:20px}
+pre{white-space:pre-wrap;background:#050a14;border:1px solid #1d4a6b;padding:8px;font-size:13px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// ==CORE==
+const BASE = {hp:30, atk:4, def:1, spd:3};
+const GAIN = {hp:6, atk:2, def:1, spd:1};
+const STAT_LABEL = {hp:'HP', atk:'攻撃', def:'防御', spd:'速度'};
+const STATS = ['hp','atk','def','spd'];
+const SKILLS = {
+  power:  {name:'強打', cost:2, desc:'3回行動ごとにダメージ2倍'},
+  pierce: {name:'貫通', cost:2, desc:'4回行動ごとに防御無視の攻撃'},
+  double: {name:'連撃', cost:3, desc:'2回行動ごとに追撃(60%)'},
+  heal:   {name:'回復', cost:2, desc:'4回行動ごとにHPを25%回復'},
+  drain:  {name:'吸収', cost:2, desc:'与えたダメージの30%を回復'}
+};
+const MAX_TURNS = 20, START_PTS = 10, CLEAR_BONUS = 3, SLOTS = 3;
+const DAILY_CAP = 40;
+const RESTRICTIONS = {
+  nodef:    {name:'防御に振れない', stat:'def'},
+  nospd:    {name:'速度に振れない', stat:'spd'},
+  noatk:    {name:'攻撃に振れない', stat:'atk'},
+  nohp:     {name:'HPに振れない', stat:'hp'},
+  noskill:  {name:'スキル禁止', slots:0},
+  oneskill: {name:'スキルは1枠のみ', slots:1}
+};
+function restrictionSlots(r){ const x = RESTRICTIONS[r]; return (x && x.slots !== undefined) ? x.slots : SLOTS; }
+function restrictionBlocked(r, k){ const x = RESTRICTIONS[r]; return !!(x && x.stat === k); }
+
+const STAGES = [
+  {name:'1. スライムドローン', hint:'まずは基本。攻撃と体力のバランスを取ろう。', stats:{hp:55,atk:7,def:2,spd:3}, skills:[]},
+  {name:'2. ガードボット',     hint:'防御が高い。攻撃を厚くしないとダメージが通らない。', stats:{hp:70,atk:7,def:5,spd:4}, skills:[]},
+  {name:'3. スピーダー',       hint:'速い。先手を取れば倒せるかも。', stats:{hp:55,atk:12,def:2,spd:10}, skills:[]},
+  {name:'4. リペアユニット',   hint:'回復で粘る。短期決戦を狙え。', stats:{hp:95,atk:8,def:4,spd:5}, skills:['heal']},
+  {name:'5. パワーアーマー',   hint:'一撃が重い。防御で耐えるか、速攻で倒すか。', stats:{hp:110,atk:15,def:6,spd:3}, skills:['power']},
+  {name:'6. ヴァンパイアAI',   hint:'与ダメージで回復する。削り負けに注意。', stats:{hp:140,atk:12,def:5,spd:7}, skills:['drain']},
+  {name:'7. ツインブレード',   hint:'手数が多く防御も貫通してくる。', stats:{hp:135,atk:14,def:6,spd:9}, skills:['double','pierce']},
+  {name:'8. 管理者ゼロ',       hint:'最終ボス。ここまでの総力戦。', stats:{hp:180,atk:17,def:7,spd:8}, skills:['power','heal']}
+];
+
+function playerStats(alloc){
+  const s = {};
+  for (const k of STATS) s[k] = BASE[k] + GAIN[k] * (alloc[k] || 0);
+  return s;
+}
+function makeUnit(name, stats, skills){
+  return {name, maxhp:stats.hp, hp:stats.hp, atk:stats.atk, def:stats.def, spd:stats.spd, skills:skills.slice(), n:0};
+}
+function simulate(pu, eu, quiet){
+  const P = Object.assign({}, pu, {skills:pu.skills.slice(), n:0});
+  const E = Object.assign({}, eu, {skills:eu.skills.slice(), n:0});
+  const log = [];
+  let turn = 0;
+  const push = quiet ? () => {} : (msg) => log.push({turn, msg, php:Math.max(0,P.hp), ehp:Math.max(0,E.hp)});
+  const heal = (u, v) => { const before = u.hp; u.hp = Math.min(u.maxhp, u.hp + v); return u.hp - before; };
+  const act = (u, t) => {
+    u.n++;
+    const has = (k) => u.skills.includes(k);
+    const base = Math.max(1, u.atk - t.def);
+    let dmg = base, label = '攻撃';
+    if (has('power') && u.n % 3 === 0){ dmg = base * 2; label = '強打'; }
+    else if (has('pierce') && u.n % 4 === 0){ dmg = Math.max(1, u.atk); label = '貫通'; }
+    t.hp -= dmg;
+    push(`${u.name}の${label}! ${t.name}に${dmg}ダメージ`);
+    if (has('drain')){
+      const h = heal(u, Math.floor(dmg * 0.3));
+      if (h > 0) push(`${u.name}は吸収で${h}回復`);
+    }
+    if (t.hp > 0 && has('double') && u.n % 2 === 0){
+      const d2 = Math.max(1, Math.floor(base * 0.6));
+      t.hp -= d2;
+      push(`${u.name}の連撃! ${t.name}に${d2}ダメージ`);
+    }
+    if (has('heal') && u.n % 4 === 0){
+      const h = heal(u, Math.floor(u.maxhp * 0.25));
+      push(`${u.name}は回復して${h}HP回復`);
+    }
+  };
+  for (turn = 1; turn <= MAX_TURNS; turn++){
+    push(`--- ターン${turn} ---`);
+    const order = E.spd > P.spd ? [E, P] : [P, E];
+    for (const u of order){
+      act(u, u === P ? E : P);
+      if (P.hp <= 0 || E.hp <= 0){
+        const win = E.hp <= 0;
+        push(win ? `${E.name}を撃破!` : `${P.name}は倒れた…`);
+        return {win, log, turns:turn};
+      }
+    }
+  }
+  push('20ターン経過。決着がつかず敗北…');
+  return {win:false, log, turns:MAX_TURNS};
+}
+function skillCost(list){ return list.reduce((s,k)=>s+SKILLS[k].cost, 0); }
+function statSpent(alloc){ return STATS.reduce((s,k)=>s+(alloc[k]||0), 0); }
+
+// 縛り条件下で勝てる最少ポイントを求める(生成スクリプト用)
+function solveMin(enemy, restr, cap){
+  const slots = restrictionSlots(restr);
+  const subsets = [[]];
+  for (const k of Object.keys(SKILLS)) for (const s of subsets.slice()) if (s.length < slots) subsets.push([...s, k]);
+  const free = STATS.filter(k => !restrictionBlocked(restr, k));
+  const eu = makeUnit('e', enemy.stats, enemy.skills);
+  for (let T = 0; T <= cap; T++){
+    for (const sk of subsets){
+      const rem = T - skillCost(sk);
+      if (rem < 0) continue;
+      let found = null;
+      const rec = (i, left, alloc) => {
+        if (found) return;
+        if (i === free.length - 1){
+          alloc[free[i]] = left;
+          const a = Object.assign({hp:0,atk:0,def:0,spd:0}, alloc);
+          const r = simulate(makeUnit('p', playerStats(a), sk), eu, true);
+          if (r.win) found = {alloc:a, skills:sk};
+          return;
+        }
+        for (let v = 0; v <= left && !found; v++){ alloc[free[i]] = v; rec(i+1, left - v, alloc); }
+      };
+      rec(0, rem, {});
+      if (found) return {min:T, sol:found};
+    }
+  }
+  return null;
+}
+// ==/CORE==
+
+// 90日分のデイリー問題(gen_daily.js が生成・検証済み)
+const DAILY = /*DAILY_START*/[{"name":"ミラージュ","stats":{"hp":84,"atk":13,"def":1,"spd":3},"skills":[],"r":"noatk","par":16},{"name":"ゲートキーパー","stats":{"hp":166,"atk":12,"def":7,"spd":11},"skills":["double","drain"],"r":"nodef","par":20},{"name":"レガシー","stats":{"hp":171,"atk":14,"def":2,"spd":4},"skills":["pierce"],"r":"noskill","par":21},{"name":"スクラップ","stats":{"hp":60,"atk":17,"def":5,"spd":7},"skills":["heal"],"r":"nohp","par":16},{"name":"バグ","stats":{"hp":129,"atk":10,"def":5,"spd":5},"skills":["heal"],"r":"noskill","par":16},{"name":"ジャマー","stats":{"hp":188,"atk":12,"def":8,"spd":5},"skills":["power"],"r":"nodef","par":21},{"name":"バグ","stats":{"hp":127,"atk":10,"def":1,"spd":4},"skills":["heal","pierce"],"r":"noskill","par":16},{"name":"ジャマー","stats":{"hp":171,"atk":13,"def":2,"spd":6},"skills":["power"],"r":"nodef","par":19},{"name":"レガシー","stats":{"hp":110,"atk":18,"def":1,"spd":4},"skills":[],"r":"noskill","par":18},{"name":"ネオンウルフ","stats":{"hp":187,"atk":14,"def":6,"spd":2},"skills":["double"],"r":"nodef","par":20},{"name":"ネオンウルフ","stats":{"hp":137,"atk":19,"def":8,"spd":2},"skills":["drain","heal"],"r":"noskill","par":26},{"name":"オーバーロード","stats":{"hp":93,"atk":19,"def":3,"spd":10},"skills":["heal"],"r":"nohp","par":20},{"name":"サイバーゴーレム","stats":{"hp":86,"atk":8,"def":8,"spd":9},"skills":["drain","power"],"r":"nodef","par":14},{"name":"スクラップ","stats":{"hp":186,"atk":8,"def":1,"spd":5},"skills":["heal","double"],"r":"noskill","par":15},{"name":"バグ","stats":{"hp":174,"atk":12,"def":8,"spd":10},"skills":["power","double"],"r":"nodef","par":22},{"name":"ミラージュ","stats":{"hp":175,"atk":13,"def":2,"spd":10},"skills":["heal","power"],"r":"noskill","par":20},{"name":"レガシー","stats":{"hp":112,"atk":19,"def":5,"spd":8},"skills":[],"r":"nohp","par":21},{"name":"レガシー","stats":{"hp":180,"atk":9,"def":3,"spd":5},"skills":["pierce","double"],"r":"noskill","par":16},{"name":"ダークパケット","stats":{"hp":172,"atk":18,"def":5,"spd":11},"skills":["power"],"r":"nodef","par":25},{"name":"ノイズ","stats":{"hp":188,"atk":19,"def":7,"spd":5},"skills":["double","pierce"],"r":"noskill","par":32},{"name":"ミラージュ","stats":{"hp":169,"atk":18,"def":6,"spd":10},"skills":["power","double"],"r":"nodef","par":28},{"name":"ジャマー","stats":{"hp":145,"atk":9,"def":4,"spd":5},"skills":["heal"],"r":"noskill","par":15},{"name":"ゲートキーパー","stats":{"hp":99,"atk":19,"def":5,"spd":3},"skills":["heal","drain"],"r":"oneskill","par":19},{"name":"バグ","stats":{"hp":151,"atk":19,"def":7,"spd":2},"skills":[],"r":"noskill","par":23},{"name":"ファントム","stats":{"hp":113,"atk":17,"def":8,"spd":4},"skills":["heal"],"r":"nospd","par":21},{"name":"ファントム","stats":{"hp":134,"atk":12,"def":1,"spd":7},"skills":["power"],"r":"nodef","par":15},{"name":"サイバーゴーレム","stats":{"hp":114,"atk":14,"def":7,"spd":9},"skills":["heal","pierce"],"r":"noskill","par":23},{"name":"ノイズ","stats":{"hp":190,"atk":15,"def":2,"spd":5},"skills":[],"r":"nodef","par":18},{"name":"レガシー","stats":{"hp":161,"atk":14,"def":6,"spd":5},"skills":["power","pierce"],"r":"noskill","par":22},{"name":"ファントム","stats":{"hp":135,"atk":19,"def":8,"spd":3},"skills":["drain","heal"],"r":"oneskill","par":24},{"name":"ミラージュ","stats":{"hp":163,"atk":17,"def":7,"spd":4},"skills":["double","pierce"],"r":"noskill","par":28},{"name":"レガシー","stats":{"hp":113,"atk":13,"def":6,"spd":11},"skills":["double"],"r":"nodef","par":18},{"name":"ネオンウルフ","stats":{"hp":132,"atk":17,"def":4,"spd":11},"skills":["pierce","drain"],"r":"noskill","par":24},{"name":"コアガード","stats":{"hp":173,"atk":13,"def":4,"spd":4},"skills":["power"],"r":"nodef","par":18},{"name":"ダークパケット","stats":{"hp":190,"atk":10,"def":1,"spd":6},"skills":["drain","heal"],"r":"noskill","par":17},{"name":"バグ","stats":{"hp":94,"atk":14,"def":8,"spd":5},"skills":["power","drain"],"r":"nodef","par":19},{"name":"ストーカー","stats":{"hp":137,"atk":19,"def":4,"spd":9},"skills":["pierce"],"r":"nohp","par":22},{"name":"ミラージュ","stats":{"hp":68,"atk":18,"def":2,"spd":3},"skills":["pierce"],"r":"noatk","par":33},{"name":"ジャマー","stats":{"hp":166,"atk":12,"def":6,"spd":6},"skills":["power","pierce"],"r":"noskill","par":19},{"name":"ネオンウルフ","stats":{"hp":110,"atk":19,"def":2,"spd":2},"skills":[],"r":"oneskill","par":17},{"name":"サイバーゴーレム","stats":{"hp":102,"atk":17,"def":7,"spd":11},"skills":["double","power"],"r":"nodef","par":24},{"name":"コアガード","stats":{"hp":99,"atk":17,"def":1,"spd":6},"skills":["pierce"],"r":"noskill","par":17},{"name":"スクラップ","stats":{"hp":168,"atk":17,"def":5,"spd":11},"skills":["power"],"r":"nodef","par":24},{"name":"ストーカー","stats":{"hp":131,"atk":17,"def":2,"spd":2},"skills":["pierce","power"],"r":"noskill","par":22},{"name":"ファントム","stats":{"hp":154,"atk":10,"def":2,"spd":11},"skills":["power","drain"],"r":"nodef","par":15},{"name":"ジャマー","stats":{"hp":180,"atk":16,"def":7,"spd":10},"skills":["pierce","heal"],"r":"noskill","par":30},{"name":"ゲートキーパー","stats":{"hp":73,"atk":19,"def":3,"spd":11},"skills":[],"r":"nohp","par":18},{"name":"レガシー","stats":{"hp":113,"atk":16,"def":1,"spd":4},"skills":["pierce","double"],"r":"oneskill","par":18},{"name":"コアガード","stats":{"hp":100,"atk":17,"def":6,"spd":7},"skills":[],"r":"noskill","par":19},{"name":"ジャマー","stats":{"hp":72,"atk":19,"def":1,"spd":10},"skills":[],"r":"noatk","par":19},{"name":"コアガード","stats":{"hp":185,"atk":15,"def":2,"spd":7},"skills":["double","heal"],"r":"nodef","par":22},{"name":"ネオンウルフ","stats":{"hp":68,"atk":9,"def":2,"spd":10},"skills":[],"r":"noatk","par":14},{"name":"ダークパケット","stats":{"hp":164,"atk":19,"def":6,"spd":8},"skills":["double","drain"],"r":"nodef","par":27},{"name":"サイバーゴーレム","stats":{"hp":111,"atk":14,"def":6,"spd":11},"skills":["pierce"],"r":"noskill","par":19},{"name":"レガシー","stats":{"hp":62,"atk":19,"def":6,"spd":4},"skills":[],"r":"nospd","par":16},{"name":"センチネル","stats":{"hp":131,"atk":18,"def":7,"spd":11},"skills":["drain","heal"],"r":"noskill","par":25},{"name":"バグ","stats":{"hp":169,"atk":19,"def":4,"spd":2},"skills":["pierce","heal"],"r":"oneskill","par":24},{"name":"オーバーロード","stats":{"hp":133,"atk":13,"def":8,"spd":11},"skills":["drain","double"],"r":"nodef","par":21},{"name":"ジャマー","stats":{"hp":184,"atk":8,"def":3,"spd":7},"skills":["heal","double"],"r":"noskill","par":16},{"name":"サイバーゴーレム","stats":{"hp":82,"atk":18,"def":1,"spd":7},"skills":[],"r":"noatk","par":20},{"name":"レガシー","stats":{"hp":107,"atk":18,"def":5,"spd":7},"skills":["heal"],"r":"noskill","par":22},{"name":"バグ","stats":{"hp":158,"atk":9,"def":4,"spd":3},"skills":["drain","power"],"r":"nodef","par":14},{"name":"ストーカー","stats":{"hp":128,"atk":7,"def":5,"spd":9},"skills":["heal"],"r":"noskill","par":13},{"name":"グリッチ","stats":{"hp":69,"atk":18,"def":1,"spd":10},"skills":["double","power"],"r":"noatk","par":19},{"name":"グリッチ","stats":{"hp":149,"atk":8,"def":4,"spd":6},"skills":["double","power"],"r":"nodef","par":15},{"name":"センチネル","stats":{"hp":124,"atk":19,"def":7,"spd":3},"skills":[],"r":"noskill","par":22},{"name":"センチネル","stats":{"hp":64,"atk":18,"def":6,"spd":11},"skills":["heal"],"r":"nohp","par":18},{"name":"スクラップ","stats":{"hp":164,"atk":10,"def":5,"spd":10},"skills":["double","power"],"r":"nodef","par":19},{"name":"グリッチ","stats":{"hp":89,"atk":18,"def":3,"spd":6},"skills":["pierce","double"],"r":"nohp","par":21},{"name":"ファントム","stats":{"hp":168,"atk":16,"def":8,"spd":4},"skills":["double","drain"],"r":"nodef","par":24},{"name":"ネオンウルフ","stats":{"hp":87,"atk":17,"def":4,"spd":9},"skills":["drain"],"r":"noskill","par":18},{"name":"グリッチ","stats":{"hp":160,"atk":16,"def":2,"spd":7},"skills":["double","drain"],"r":"nodef","par":22},{"name":"レガシー","stats":{"hp":76,"atk":17,"def":1,"spd":9},"skills":[],"r":"noatk","par":17},{"name":"ストーカー","stats":{"hp":169,"atk":9,"def":2,"spd":7},"skills":["double","drain"],"r":"nodef","par":13},{"name":"ファントム","stats":{"hp":80,"atk":16,"def":2,"spd":2},"skills":["power","drain"],"r":"noskill","par":15},{"name":"バグ","stats":{"hp":68,"atk":16,"def":1,"spd":4},"skills":["double","power"],"r":"nohp","par":14},{"name":"スクラップ","stats":{"hp":170,"atk":12,"def":3,"spd":9},"skills":["power"],"r":"nodef","par":18},{"name":"ミラージュ","stats":{"hp":81,"atk":19,"def":2,"spd":4},"skills":["power"],"r":"nospd","par":19},{"name":"ミラージュ","stats":{"hp":120,"atk":18,"def":8,"spd":7},"skills":["heal"],"r":"noskill","par":25},{"name":"オーバーロード","stats":{"hp":86,"atk":19,"def":5,"spd":9},"skills":[],"r":"nohp","par":20},{"name":"サイバーゴーレム","stats":{"hp":170,"atk":9,"def":1,"spd":11},"skills":["pierce","heal"],"r":"noskill","par":18},{"name":"スクラップ","stats":{"hp":83,"atk":16,"def":3,"spd":7},"skills":["double","drain"],"r":"nodef","par":18},{"name":"サイバーゴーレム","stats":{"hp":122,"atk":14,"def":8,"spd":8},"skills":["heal"],"r":"noskill","par":21},{"name":"センチネル","stats":{"hp":188,"atk":14,"def":2,"spd":9},"skills":["power","drain"],"r":"nodef","par":21},{"name":"ネオンウルフ","stats":{"hp":162,"atk":15,"def":6,"spd":9},"skills":["heal","pierce"],"r":"noskill","par":27},{"name":"ダークパケット","stats":{"hp":154,"atk":8,"def":2,"spd":6},"skills":["double"],"r":"nodef","par":12},{"name":"ゲートキーパー","stats":{"hp":163,"atk":15,"def":3,"spd":5},"skills":["power","pierce"],"r":"noskill","par":22},{"name":"ダークパケット","stats":{"hp":187,"atk":13,"def":3,"spd":9},"skills":["power","heal"],"r":"nodef","par":21},{"name":"グリッチ","stats":{"hp":104,"atk":19,"def":4,"spd":2},"skills":["heal","drain"],"r":"noskill","par":20},{"name":"ゲートキーパー","stats":{"hp":166,"atk":11,"def":5,"spd":10},"skills":["power"],"r":"nodef","par":18}]/*DAILY_END*/;
+
+// ---------- セーブ ----------
+const KEY = 'warifuri_battle_v1';
+function newAlloc(){ return {hp:0,atk:0,def:0,spd:0,skills:[]}; }
+function defaultSave(){
+  return {cleared:0, tries:STAGES.map(()=>0), best:STAGES.map(()=>null), alloc:newAlloc(), daily:null};
+}
+function load(){
+  try{
+    const s = JSON.parse(localStorage.getItem(KEY));
+    if (s && s.alloc && s.tries){ if (!('daily' in s)) s.daily = null; return s; }
+  }catch(e){}
+  return defaultSave();
+}
+function persist(){ try{ localStorage.setItem(KEY, JSON.stringify(save)); }catch(e){} }
+let save = load();
+const totalPts = () => START_PTS + CLEAR_BONUS * save.cleared;
+const spentPts = () => statSpent(save.alloc) + skillCost(save.alloc.skills);
+const remainPts = () => totalPts() - spentPts();
+function resetAlloc(){ save.alloc = newAlloc(); persist(); }
+if (remainPts() < 0) resetAlloc();
+
+const app = document.getElementById('app');
+const $ = (id) => document.getElementById(id);
+let timer = null;
+function stopTimer(){ if (timer){ clearInterval(timer); timer = null; } }
+
+// ---------- ステージ選択 ----------
+function todayInfo(){
+  const epoch = Math.floor(Date.UTC(2026, 9, 16) / 86400000);
+  const d = Math.floor((Date.now() + 9 * 3600000) / 86400000) - epoch;
+  const day = Math.max(0, d);
+  return {day, idx: DAILY.length ? day % DAILY.length : 0, no: day + 1};
+}
+function dailyState(){
+  const t = todayInfo();
+  if (!save.daily || save.daily.day !== t.day){
+    save.daily = {day:t.day, tries:0, best:null, alloc:newAlloc()};
+    persist();
+  }
+  return save.daily;
+}
+const starStr = (n) => '★'.repeat(n) + '☆'.repeat(3 - n);
+
+function showSelect(){
+  stopTimer();
+  let h = `<h1>割り振りバトル</h1><div class="sub">ポイントを振り分けて、自動戦闘に勝て</div>`;
+  if (DAILY.length){
+    const t = todayInfo(), p = DAILY[t.idx], ds = dailyState();
+    const st = ds.best ? `今日の最高 ${starStr(ds.best.stars)} ${ds.best.used}pt` : '未クリア';
+    h += `<button class="stage main" onclick="showDaily()">📅 今日のデイリー #${t.no}<br><span class="small">縛り: ${RESTRICTIONS[p.r].name} / ${st}</span></button>`;
+  }
+  h += `<div class="card">ステージ戦 総ポイント <span class="pts">${totalPts()}</span>(クリアごとに+${CLEAR_BONUS})</div>`;
+  STAGES.forEach((s,i)=>{
+    const locked = i > save.cleared;
+    const done = i < save.cleared;
+    const best = save.best[i] ? ` / 最短${save.best[i]}回` : '';
+    h += `<button class="stage" ${locked?'disabled':''} onclick="showAlloc(${i})">${done?'★ ':''}${s.name}${best}${locked?' 🔒':''}</button>`;
+  });
+  if (save.cleared >= STAGES.length) h += `<div class="card win">全ステージクリア!おめでとう</div>`;
+  h += `<p class="small"><button onclick="resetAll()">データ初期化</button></p>`;
+  app.innerHTML = h;
+}
+function resetAll(){
+  if (confirm('セーブデータを消去しますか?')){ save = defaultSave(); persist(); showSelect(); }
+}
+
+// ---------- 共通 ----------
+function skillLabel(list){ return list.length ? list.map(k=>SKILLS[k].name).join('・') : 'なし'; }
+function enemyCard(name, st, skills, hint){
+  return `<div class="card"><b>敵情報: ${name}</b><br>HP ${st.hp} / 攻撃 ${st.atk} / 防御 ${st.def} / 速度 ${st.spd}<br>スキル: ${skillLabel(skills)}${hint ? `<div class="hint">💡 ${hint}</div>` : ''}</div>`;
+}
+
+// ---------- ステージ戦: 割り振り ----------
+let curStage = 0;
+function showAlloc(i){
+  curStage = i;
+  stopTimer();
+  const st = STAGES[i];
+  const a = save.alloc;
+  const ps = playerStats(a);
+  const rem = remainPts();
+  let h = `<h1>${st.name}</h1>`;
+  h += enemyCard(st.name.replace(/^\d+\.\s*/,''), st.stats, st.skills, st.hint);
+  h += `<div class="card"><b>あなた</b>  残りポイント <span class="pts">${rem}</span> / ${totalPts()}`;
+  STATS.forEach(k=>{
+    h += `<div class="row"><span class="lbl">${STAT_LABEL[k]}</span>
+      <button class="pm" onclick="adj('${k}',-1)" ${a[k]<=0?'disabled':''}>−</button>
+      <span class="val">${ps[k]} <span class="small">(+${a[k]})</span></span>
+      <button class="pm" onclick="adj('${k}',1)" ${rem<=0?'disabled':''}>＋</button></div>`;
+  });
+  h += `</div><div class="card"><b>スキル</b> (${a.skills.length}/${SLOTS}枠)`;
+  Object.keys(SKILLS).forEach(k=>{
+    const on = a.skills.includes(k);
+    const can = on || (a.skills.length < SLOTS && rem >= SKILLS[k].cost);
+    h += `<button class="skill ${on?'on':''}" ${can?'':'disabled'} onclick="toggleSkill('${k}')">${SKILLS[k].name}(${SKILLS[k].cost}pt) ${SKILLS[k].desc}</button>`;
+  });
+  h += `</div>`;
+  h += `<button class="main" onclick="startBattle()">戦闘開始</button><button onclick="resetAlloc();showAlloc(${i})">振り直し</button><button onclick="showSelect()">戻る</button>`;
+  h += `<p class="small">これまでの挑戦: ${save.tries[i]}回</p>`;
+  app.innerHTML = h;
+}
+function adj(k, d){
+  const a = save.alloc;
+  if (d > 0 && remainPts() <= 0) return;
+  if (d < 0 && a[k] <= 0) return;
+  a[k] += d; persist(); showAlloc(curStage);
+}
+function toggleSkill(k){
+  const a = save.alloc;
+  const idx = a.skills.indexOf(k);
+  if (idx >= 0) a.skills.splice(idx,1);
+  else if (a.skills.length < SLOTS && remainPts() >= SKILLS[k].cost) a.skills.push(k);
+  persist(); showAlloc(curStage);
+}
+
+// ---------- デイリー: 割り振り ----------
+function showDaily(){
+  stopTimer();
+  const t = todayInfo(), p = DAILY[t.idx], ds = dailyState();
+  const a = ds.alloc, ps = playerStats(a);
+  const used = statSpent(a) + skillCost(a.skills);
+  const slots = restrictionSlots(p.r);
+  let h = `<h1>デイリー #${t.no}</h1>`;
+  h += `<div class="card"><span class="rule">縛り: ${RESTRICTIONS[p.r].name}</span><br>ルール: 使うポイントが<b>少ないほど高評価</b>(★★★=最少ポイント)</div>`;
+  h += enemyCard(p.name, p.stats, p.skills, '');
+  h += `<div class="card"><b>あなた</b>  使用ポイント <span class="pts">${used}</span> / 上限${DAILY_CAP}`;
+  STATS.forEach(k=>{
+    const blocked = restrictionBlocked(p.r, k);
+    h += `<div class="row"><span class="lbl">${STAT_LABEL[k]}</span>
+      <button class="pm" onclick="adjD('${k}',-1)" ${a[k]<=0?'disabled':''}>−</button>
+      <span class="val">${ps[k]} <span class="small">(+${a[k]})</span>${blocked?' 🔒':''}</span>
+      <button class="pm" onclick="adjD('${k}',1)" ${(blocked||used>=DAILY_CAP)?'disabled':''}>＋</button></div>`;
+  });
+  h += `</div><div class="card"><b>スキル</b> (${a.skills.length}/${slots}枠)`;
+  if (slots === 0) h += `<div class="small">このデイリーではスキルを使えません</div>`;
+  Object.keys(SKILLS).forEach(k=>{
+    const on = a.skills.includes(k);
+    const can = on || (a.skills.length < slots && used + SKILLS[k].cost <= DAILY_CAP);
+    h += `<button class="skill ${on?'on':''}" ${can?'':'disabled'} onclick="toggleSkillD('${k}')">${SKILLS[k].name}(${SKILLS[k].cost}pt) ${SKILLS[k].desc}</button>`;
+  });
+  h += `</div>`;
+  h += `<button class="main" onclick="startDailyBattle()">戦闘開始</button><button onclick="resetD()">振り直し</button><button onclick="showSelect()">戻る</button>`;
+  h += `<p class="small">今日の挑戦: ${ds.tries}回${ds.best ? ` / 最高 ${starStr(ds.best.stars)} ${ds.best.used}pt` : ''}</p>`;
+  app.innerHTML = h;
+}
+function adjD(k, d){
+  const t = todayInfo(), p = DAILY[t.idx], a = dailyState().alloc;
+  const used = statSpent(a) + skillCost(a.skills);
+  if (d > 0 && (restrictionBlocked(p.r, k) || used >= DAILY_CAP)) return;
+  if (d < 0 && a[k] <= 0) return;
+  a[k] += d; persist(); showDaily();
+}
+function toggleSkillD(k){
+  const t = todayInfo(), p = DAILY[t.idx], a = dailyState().alloc;
+  const used = statSpent(a) + skillCost(a.skills);
+  const idx = a.skills.indexOf(k);
+  if (idx >= 0) a.skills.splice(idx,1);
+  else if (a.skills.length < restrictionSlots(p.r) && used + SKILLS[k].cost <= DAILY_CAP) a.skills.push(k);
+  persist(); showDaily();
+}
+function resetD(){ dailyState().alloc = newAlloc(); persist(); showDaily(); }
+
+// ---------- 戦闘(共通) ----------
+function runBattle(titleHtml, pu, eu, res, resultHtml, controlsHtml){
+  let h = titleHtml;
+  h += `<div>あなた <span id="php">${pu.hp}</span>/${pu.maxhp}</div><div class="bar"><i id="pbar" style="width:100%"></i></div>`;
+  h += `<div>${eu.name} <span id="ehp">${eu.hp}</span>/${eu.maxhp}</div><div class="bar e"><i id="ebar" style="width:100%"></i></div>`;
+  h += `<div id="log"></div><div id="result"></div><div id="ctrl"><button onclick="skipBattle()">スキップ</button></div>`;
+  app.innerHTML = h;
+  let idx = 0;
+  const step = () => {
+    if (idx >= res.log.length){ finish(); return; }
+    const e = res.log[idx++];
+    const lg = $('log');
+    lg.innerHTML += e.msg + '<br>';
+    lg.scrollTop = lg.scrollHeight;
+    $('php').textContent = e.php; $('ehp').textContent = e.ehp;
+    $('pbar').style.width = (100 * e.php / pu.maxhp) + '%';
+    $('ebar').style.width = (100 * e.ehp / eu.maxhp) + '%';
+  };
+  const finish = () => {
+    stopTimer();
+    $('result').innerHTML = `<div class="card">${resultHtml}</div>`;
+    $('ctrl').innerHTML = controlsHtml;
+  };
+  window.skipBattle = () => { while (idx < res.log.length) step(); finish(); };
+  timer = setInterval(step, 450);
+}
+
+function startBattle(){
+  const i = curStage, st = STAGES[i];
+  const pu = makeUnit('あなた', playerStats(save.alloc), save.alloc.skills);
+  const eu = makeUnit(st.name.replace(/^\d+\.\s*/,''), st.stats, st.skills);
+  const res = simulate(pu, eu);
+  save.tries[i]++;
+  let resultHtml, firstClear = false, tries = save.tries[i];
+  if (res.win){
+    if (!save.best[i] || tries < save.best[i]) save.best[i] = tries;
+    if (i === save.cleared){ save.cleared++; firstClear = true; }
+    save.tries[i] = 0;
+    resultHtml = `<div class="win">勝利! ${tries}回目で突破</div>` + (firstClear ? `<div class="pts">+${CLEAR_BONUS}pt 獲得(総${totalPts()}pt)</div>` : '');
+  } else {
+    resultHtml = `<div class="lose">敗北… (挑戦${tries}回目)</div><div class="small">割り振りを見直して再挑戦しよう</div>`;
+  }
+  persist();
+  let c = '';
+  if (res.win && i + 1 < STAGES.length) c += `<button class="main" onclick="showAlloc(${i+1})">次のステージ</button>`;
+  if (!res.win) c += `<button class="main" onclick="showAlloc(${i})">振り直して再挑戦</button>`;
+  c += `<button onclick="showSelect()">ステージ選択</button>`;
+  runBattle(`<h1>${st.name}</h1>`, pu, eu, res, resultHtml, c);
+}
+
+let shareText = '';
+function copyShare(){
+  const done = () => { const b = $('copybtn'); if (b) b.textContent = 'コピーしました'; };
+  try{
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(shareText).then(done, () => prompt('コピーして共有してください', shareText));
+      return;
+    }
+  }catch(e){}
+  prompt('コピーして共有してください', shareText);
+}
+
+function startDailyBattle(){
+  const t = todayInfo(), p = DAILY[t.idx], ds = dailyState(), a = ds.alloc;
+  const used = statSpent(a) + skillCost(a.skills);
+  const pu = makeUnit('あなた', playerStats(a), a.skills);
+  const eu = makeUnit(p.name, p.stats, p.skills);
+  const res = simulate(pu, eu);
+  ds.tries++;
+  let resultHtml;
+  if (res.win){
+    const stars = used <= p.par ? 3 : (used <= p.par + 3 ? 2 : 1);
+    if (!ds.best || used < ds.best.used) ds.best = {used, stars, tries:ds.tries};
+    const b = ds.best;
+    shareText = `割り振りバトル デイリー#${t.no} ${starStr(b.stars)} ${b.used}pt(${b.tries}回目)\n縛り:${RESTRICTIONS[p.r].name}`;
+    resultHtml = `<div class="win">勝利! <span class="star">${starStr(stars)}</span> ${used}pt</div>`
+      + (stars === 3 ? `<div class="pts">パーフェクト!最少ポイントで突破</div>` : `<div class="small">もっと少ないポイントで勝てる振り方があります</div>`)
+      + `<pre>${shareText}</pre><button id="copybtn" onclick="copyShare()">結果をコピー</button>`;
+  } else {
+    resultHtml = `<div class="lose">敗北… (今日の挑戦${ds.tries}回目)</div><div class="small">縛りの中で振り方を見直そう</div>`;
+  }
+  persist();
+  const c = `<button class="main" onclick="showDaily()">割り振りに戻る</button><button onclick="showSelect()">トップへ</button>`;
+  runBattle(`<h1>デイリー #${t.no}</h1>`, pu, eu, res, resultHtml, c);
+}
+
+if (typeof document !== 'undefined' && document.getElementById('app')) showSelect();
+</script>
+</body>
+</html>
