@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>割り振りバトル</title>
+<meta name="description" content="ポイントを割り振って自動戦闘に挑む、毎日1問のパズルバトル。少ないポイントで勝つほど高評価。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="割り振りバトル 毎日1問のパズル">
+<meta property="og:description" content="縛りの中でポイントを割り振って勝て。最少ポイントで★3!">
+<meta property="og:url" content="https://atsushisakuya.github.io/warifuri-battle/">
+<meta name="twitter:card" content="summary">
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#070b16;color:#cfe8ff;font-family:"Courier New",monospace;min-height:100vh}
@@ -54,6 +60,7 @@ const SKILLS = {
 };
 const MAX_TURNS = 20, START_PTS = 10, CLEAR_BONUS = 3, SLOTS = 3;
 const DAILY_CAP = 40;
+const SITE_URL = 'https://atsushisakuya.github.io/warifuri-battle/';
 const RESTRICTIONS = {
   nodef:    {name:'防御に振れない', stat:'def'},
   nospd:    {name:'速度に振れない', stat:'spd'},
@@ -402,7 +409,7 @@ function startDailyBattle(){
     const stars = used <= p.par ? 3 : (used <= p.par + 3 ? 2 : 1);
     if (!ds.best || used < ds.best.used) ds.best = {used, stars, tries:ds.tries};
     const b = ds.best;
-    shareText = `割り振りバトル デイリー#${t.no} ${starStr(b.stars)} ${b.used}pt(${b.tries}回目)\n縛り:${RESTRICTIONS[p.r].name}`;
+    shareText = `割り振りバトル デイリー#${t.no} ${starStr(b.stars)} ${b.used}pt(${b.tries}回目)\n縛り:${RESTRICTIONS[p.r].name}\n${SITE_URL}`;
     resultHtml = `<div class="win">勝利! <span class="star">${starStr(stars)}</span> ${used}pt</div>`
       + (stars === 3 ? `<div class="pts">パーフェクト!最少ポイントで突破</div>` : `<div class="small">もっと少ないポイントで勝てる振り方があります</div>`)
       + `<pre>${shareText}</pre><button id="copybtn" onclick="copyShare()">結果をコピー</button>`;
@@ -416,5 +423,6 @@ function startDailyBattle(){
 
 if (typeof document !== 'undefined' && document.getElementById('app')) showSelect();
 </script>
+<!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "56f48b43977249c99fff0b0864b247a9"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
