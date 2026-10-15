@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>割り振りバトル</title>
 <meta name="description" content="ポイントを割り振って自動戦闘に挑む、毎日1問のパズルバトル。少ないポイントで勝つほど高評価。">
 <meta property="og:type" content="website">
@@ -12,35 +12,94 @@
 <meta name="twitter:card" content="summary">
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#070b16;color:#cfe8ff;font-family:"Courier New",monospace;min-height:100vh}
+:root{--gold:#ffd966;--parch:#f3e9d2;--wood:#5a3a1f;--line:#c9a85a;--dim:#a89878;--panel:#1c2347;--deep:#120d1c}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%,#2f2650 0%,#171229 55%,#0e0a18 100%) fixed;color:var(--parch);font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP","Noto Serif CJK JP",serif;min-height:100vh}
 #app{max-width:480px;margin:0 auto;padding:14px}
-h1{font-size:20px;color:#0ff;text-shadow:0 0 8px #0ff;margin:6px 0 2px;letter-spacing:2px}
-.sub{color:#789;font-size:12px;margin-bottom:10px}
-.card{border:1px solid #1d4a6b;background:#0c1426;padding:10px;margin:8px 0;box-shadow:0 0 6px #0ff3 inset}
-button{font-family:inherit;font-size:15px;color:#0ff;background:#0a1830;border:1px solid #0ff;padding:10px 12px;margin:4px 4px 4px 0;cursor:pointer}
-button:active{background:#0ff;color:#000}
-button:disabled{color:#456;border-color:#345;cursor:not-allowed}
-button.main{border-color:#f0f;color:#f0f;font-weight:bold}
-button.main:active{background:#f0f;color:#000}
-.stage{display:block;width:100%;text-align:left;margin:6px 0}
-.row{display:flex;align-items:center;justify-content:space-between;margin:6px 0}
-.row .lbl{width:64px}
-.row .val{flex:1;text-align:center}
-.pm{width:44px;padding:8px 0;text-align:center}
-.pts{color:#ff0;font-weight:bold}
-.bar{height:12px;background:#122;border:1px solid #1d4a6b;margin:2px 0 6px}
-.bar>i{display:block;height:100%;background:#0f8;transition:width .3s}
-.bar.e>i{background:#f46}
-#log{height:200px;overflow-y:auto;border:1px solid #1d4a6b;background:#050a14;padding:6px;font-size:13px;line-height:1.5}
+h1{font-size:21px;color:var(--gold);text-shadow:0 2px 0 #5a3a1f,0 0 10px #ffb34755;margin:6px 0 2px;letter-spacing:2px}
+.sub{color:var(--dim);font-size:12px;margin-bottom:10px}
+.card{border:2px solid var(--line);outline:1px solid #5a4620;outline-offset:2px;border-radius:6px;background:linear-gradient(#232b57,#1a2145);padding:10px;margin:10px 0;box-shadow:0 2px 0 #0007,0 0 0 1px #0006 inset}
+button{font-family:inherit;font-size:15px;color:#fff4d6;background:linear-gradient(#7a5230,#4f321a);border:2px solid var(--line);border-radius:6px;padding:10px 12px;margin:4px 4px 4px 0;cursor:pointer;text-shadow:0 1px 0 #0008;box-shadow:0 2px 0 #2a1a0a}
+button:active{background:linear-gradient(#e8c36a,#c9a04a);color:#2a1a0a;text-shadow:none;transform:translateY(1px);box-shadow:0 1px 0 #2a1a0a}
+button:disabled{color:#8a7c64;border-color:#5a4a30;background:#2a2218;cursor:not-allowed;box-shadow:none}
+button.main{border-color:#ff9a6a;color:#fff;font-weight:bold;background:linear-gradient(#b8452f,#7e2a1c)}
+button.main:active{background:linear-gradient(#ff9a6a,#e0653f);color:#2a0a04}
+.stage{display:block;width:100%;text-align:left;margin:7px 0}
+.row{display:grid;grid-template-columns:56px 44px minmax(0,1fr) 44px;align-items:center;gap:6px;margin:6px 0}
+.row .lbl{width:auto}
+.row .val{text-align:center;white-space:nowrap}
+.pm{width:44px;min-width:44px;padding:8px 0;margin:0;text-align:center}
+.pts{color:var(--gold);font-weight:bold}
+.bar{height:12px;background:#0d0a14;border:2px solid #6b5a3a;border-radius:3px;margin:2px 0 6px;overflow:hidden}
+.bar>i{display:block;height:100%;background:linear-gradient(#7dff9a,#2fbf5f);transition:width .3s}
+.bar.e>i{background:linear-gradient(#ff8a8a,#d63a3a)}
+#log{height:200px;overflow-y:auto;border:2px solid #6b5a3a;border-radius:6px;background:#120d1c;padding:6px;font-size:13px;line-height:1.5}
 .skill{display:block;width:100%;text-align:left}
-.skill.on{background:#0ff;color:#000}
-.win{color:#0f8;font-size:18px;font-weight:bold}
-.lose{color:#f46;font-size:18px;font-weight:bold}
-.small{font-size:12px;color:#789}
-.hint{color:#ff0;font-size:13px}
-.rule{color:#f0f;font-weight:bold}
-.star{color:#ff0;font-size:20px}
-pre{white-space:pre-wrap;background:#050a14;border:1px solid #1d4a6b;padding:8px;font-size:13px}
+.skill.on{background:linear-gradient(#ffe08a,#d9a63a);color:#2a1a0a;text-shadow:none;border-color:#fff1b8}
+.win{color:#8dffa8;font-size:18px;font-weight:bold}
+.lose{color:#ff8a8a;font-size:18px;font-weight:bold}
+.small{font-size:12px;color:var(--dim)}
+.hint{color:#ffe08a;font-size:13px}
+.rule{color:#ffb347;font-weight:bold}
+.star{color:var(--gold);font-size:20px}
+pre{white-space:pre-wrap;background:#120d1c;border:1px solid #6b5a3a;border-radius:4px;padding:8px;font-size:13px}
+
+html,body,button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;overscroll-behavior:none}
+pre{-webkit-user-select:text;user-select:text}
+.home{text-align:center;padding-top:10px}
+.logo{font-size:36px;line-height:1.2;margin:12px 0}
+.home .stage{text-align:center}
+.homearena{display:flex;justify-content:space-around;align-items:flex-end;height:110px;margin:14px 0}
+.homearena .fighter{position:static;width:84px;height:84px}
+.idle .spr{animation:bob 1.2s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.spr{width:100%;height:100%;display:block}
+.foe .spr{transform:scaleX(-1);filter:hue-rotate(var(--hue,0deg))}
+.sil .spr{filter:brightness(0) opacity(.55)}
+.sil,.homearena .fighter.sil{position:relative}
+button.main:disabled{color:#8a7c64;border-color:#5a4a30;background:#2a2218;font-weight:normal}
+.qm{position:absolute;left:0;right:0;top:28px;text-align:center;font-size:30px;color:var(--gold);font-weight:bold;text-shadow:0 2px 0 #5a3a1f}
+.mini{display:inline-block;width:28px;height:28px;vertical-align:middle;margin-right:8px}
+.mini.big{width:44px;height:44px;float:right;margin:0 0 4px 8px}
+.mini.sil .spr{filter:brightness(0) opacity(.45)}
+#arena{position:relative;height:150px;margin:8px 0;border:2px solid var(--line);border-radius:6px;background:linear-gradient(#2d3b7a 0%,#8a5a9a 45%,#e8a870 70%,#4a6a34 72%,#33501f 100%);overflow:hidden}
+#arena:after{content:'';position:absolute;left:0;right:0;bottom:0;height:34px;background:repeating-linear-gradient(90deg,#3b5a26 0 6px,#335022 6px 12px);opacity:.55}
+#arena .fighter{position:absolute;bottom:24px;width:88px;height:88px;transition:transform .18s ease}
+#fp{left:14%}
+#fe{right:14%}
+.lunge-p{transform:translateX(56px)}
+.lunge-e{transform:translateX(-56px)}
+.hurt{animation:hurt .32s}
+@keyframes hurt{0%{filter:brightness(3)}25%{transform:translateX(-7px)}50%{transform:translateX(7px)}100%{filter:none}}
+.dead{animation:dead .7s forwards}
+@keyframes dead{to{transform:rotate(80deg) translateY(30px);opacity:.15}}
+#fx{position:absolute;left:0;right:0;top:0;bottom:0;pointer-events:none}
+.fl{position:absolute;bottom:96px;font-weight:bold;animation:flt .9s forwards;text-shadow:0 0 4px #000}
+@keyframes flt{from{transform:translateY(0);opacity:1}to{transform:translateY(-36px);opacity:0}}
+.fl.dmg{color:#ff6b6b;font-size:20px}
+.fl.heal{color:#5f8;font-size:18px}
+.fl.skill{color:#ffb347;font-size:14px;bottom:118px}
+.heropanel{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.heroinfo{flex:1}
+.herobox{position:relative;width:72px;height:72px;flex:none}
+.herobox .spr{width:100%;height:100%;display:block}
+#herofx{position:absolute;left:0;top:0;right:0;bottom:0;pointer-events:none}
+.herobox.fx .spr{animation:pop .45s ease-out;filter:drop-shadow(0 0 6px var(--fx)) drop-shadow(0 0 14px var(--fx))}
+.herobox.fx:after{content:'';position:absolute;left:-6px;top:-6px;right:-6px;bottom:-6px;border:2px solid var(--fx);border-radius:50%;animation:ring .55s forwards}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.25)}100%{transform:scale(1)}}
+@keyframes ring{from{transform:scale(.6);opacity:1}to{transform:scale(1.35);opacity:0}}
+.fxt{position:absolute;left:50%;top:-6px;transform:translateX(-50%);color:var(--fx);font-weight:bold;font-size:15px;white-space:nowrap;text-shadow:0 0 4px #000;animation:fxt .8s forwards}
+@keyframes fxt{to{transform:translate(-50%,-26px);opacity:0}}
+.spark{position:absolute;left:50%;top:50%;width:5px;height:5px;margin:-2px 0 0 -2px;background:var(--fx);animation:spark .6s forwards}
+@keyframes spark{to{transform:translate(var(--dx),var(--dy));opacity:0}}
+.hintcard{border-color:#b8902a;background:linear-gradient(#3a2f1a,#2a2212)}
+.statcard{position:relative}
+.resetbtn{position:absolute;top:8px;right:8px;margin:0;padding:5px 10px;font-size:12px}
+.foot a{color:#c9b98a;margin:0 4px}
+.homearena{border-bottom:3px solid #4a6a34}
+.ach{color:#fd0;margin-top:6px}
+.toast{position:fixed;left:8px;right:8px;bottom:16px;background:#222a;border:1px solid #fd0;border-radius:8px;padding:8px;z-index:9;text-align:center;backdrop-filter:blur(4px)}
+.form{color:#fd0}
 </style>
 </head>
 <body>
@@ -48,7 +107,7 @@ pre{white-space:pre-wrap;background:#050a14;border:1px solid #1d4a6b;padding:8px
 <script>
 // ==CORE==
 const BASE = {hp:30, atk:4, def:1, spd:3};
-const GAIN = {hp:6, atk:2, def:1, spd:1};
+const GAIN = {hp:8, atk:2, def:2, spd:1};
 const STAT_LABEL = {hp:'HP', atk:'攻撃', def:'防御', spd:'速度'};
 const STATS = ['hp','atk','def','spd'];
 const SKILLS = {
@@ -56,9 +115,10 @@ const SKILLS = {
   pierce: {name:'貫通', cost:2, desc:'4回行動ごとに防御無視の攻撃'},
   double: {name:'連撃', cost:3, desc:'2回行動ごとに追撃(60%)'},
   heal:   {name:'回復', cost:2, desc:'4回行動ごとにHPを25%回復'},
-  drain:  {name:'吸収', cost:2, desc:'与えたダメージの30%を回復'}
+  drain:  {name:'吸収', cost:2, desc:'与えたダメージの20%を回復'}
 };
 const MAX_TURNS = 20, START_PTS = 10, CLEAR_BONUS = 3, SLOTS = 3;
+const TIME_UNIT = 12, MAX_TIME = 72; // 速度12で1時間ごとに1行動。MAX_TIMEを超えたら時間切れ
 const DAILY_CAP = 40;
 const SITE_URL = 'https://atsushisakuya.github.io/warifuri-battle/';
 const RESTRICTIONS = {
@@ -73,14 +133,14 @@ function restrictionSlots(r){ const x = RESTRICTIONS[r]; return (x && x.slots !=
 function restrictionBlocked(r, k){ const x = RESTRICTIONS[r]; return !!(x && x.stat === k); }
 
 const STAGES = [
-  {name:'1. スライムドローン', hint:'まずは基本。攻撃と体力のバランスを取ろう。', stats:{hp:55,atk:7,def:2,spd:3}, skills:[]},
-  {name:'2. ガードボット',     hint:'防御が高い。攻撃を厚くしないとダメージが通らない。', stats:{hp:70,atk:7,def:5,spd:4}, skills:[]},
-  {name:'3. スピーダー',       hint:'速い。先手を取れば倒せるかも。', stats:{hp:55,atk:12,def:2,spd:10}, skills:[]},
-  {name:'4. リペアユニット',   hint:'回復で粘る。短期決戦を狙え。', stats:{hp:95,atk:8,def:4,spd:5}, skills:['heal']},
-  {name:'5. パワーアーマー',   hint:'一撃が重い。防御で耐えるか、速攻で倒すか。', stats:{hp:110,atk:15,def:6,spd:3}, skills:['power']},
-  {name:'6. ヴァンパイアAI',   hint:'与ダメージで回復する。削り負けに注意。', stats:{hp:140,atk:12,def:5,spd:7}, skills:['drain']},
-  {name:'7. ツインブレード',   hint:'手数が多く防御も貫通してくる。', stats:{hp:135,atk:14,def:6,spd:9}, skills:['double','pierce']},
-  {name:'8. 管理者ゼロ',       hint:'最終ボス。ここまでの総力戦。', stats:{hp:180,atk:17,def:7,spd:8}, skills:['power','heal']}
+  {name:'1. スライム', hint:'まずは基本。攻撃と体力のバランスを取ろう。', stats:{hp:71,atk:9,def:3,spd:3}, skills:[]},
+  {name:'2. ストーンガード',     hint:'防御が高い。攻撃を厚くしないとダメージが通らない。', stats:{hp:76,atk:8,def:6,spd:4}, skills:[]},
+  {name:'3. ダークバット',       hint:'とにかく速い。速度を上げて手数で張り合うか、速攻で倒そう。', stats:{hp:68,atk:13,def:2,spd:8}, skills:[]},
+  {name:'4. ヒールマッシュ',   hint:'回復で粘る。短期決戦を狙え。', stats:{hp:158,atk:11,def:5,spd:5}, skills:['heal']},
+  {name:'5. オーガ',   hint:'一撃が重い。防御で耐えるか、速攻で倒すか。', stats:{hp:167,atk:19,def:7,spd:3}, skills:['power']},
+  {name:'6. ヴァンパイア',   hint:'与ダメージで回復する。削り負けに注意。', stats:{hp:259,atk:18,def:6,spd:7}, skills:['drain']},
+  {name:'7. 双剣スケルトン',   hint:'手数が多く防御も貫通してくる。', stats:{hp:153,atk:15,def:6,spd:9}, skills:['double','pierce']},
+  {name:'8. 魔王ゼロ',       hint:'最終ボス。スキルなしでは勝てない。組み合わせを考えよう。', stats:{hp:212,atk:19,def:7,spd:8}, skills:['power','heal']}
 ];
 
 function playerStats(alloc){
@@ -96,45 +156,50 @@ function simulate(pu, eu, quiet){
   const E = Object.assign({}, eu, {skills:eu.skills.slice(), n:0});
   const log = [];
   let turn = 0;
-  const push = quiet ? () => {} : (msg) => log.push({turn, msg, php:Math.max(0,P.hp), ehp:Math.max(0,E.hp)});
+  const push = quiet ? () => {} : (msg, meta) => log.push(Object.assign({turn, msg, php:Math.max(0,P.hp), ehp:Math.max(0,E.hp)}, meta || {}));
   const heal = (u, v) => { const before = u.hp; u.hp = Math.min(u.maxhp, u.hp + v); return u.hp - before; };
   const act = (u, t) => {
     u.n++;
     const has = (k) => u.skills.includes(k);
-    const base = Math.max(1, u.atk - t.def);
+    const base = Math.max(Math.ceil(u.atk * 0.25), u.atk - t.def);
     let dmg = base, label = '攻撃';
     if (has('power') && u.n % 3 === 0){ dmg = base * 2; label = '強打'; }
     else if (has('pierce') && u.n % 4 === 0){ dmg = Math.max(1, u.atk); label = '貫通'; }
     t.hp -= dmg;
-    push(`${u.name}の${label}! ${t.name}に${dmg}ダメージ`);
+    push(`${u.name}の${label}! ${t.name}に${dmg}ダメージ`, {kind:'hit', side:(u === P ? 'p' : 'e'), label, dmg});
     if (has('drain')){
-      const h = heal(u, Math.floor(dmg * 0.3));
-      if (h > 0) push(`${u.name}は吸収で${h}回復`);
+      const h = heal(u, Math.floor(dmg * 0.2));
+      if (h > 0) push(`${u.name}は吸収で${h}回復`, {kind:'heal', side:(u === P ? 'p' : 'e'), amt:h});
     }
     if (t.hp > 0 && has('double') && u.n % 2 === 0){
       const d2 = Math.max(1, Math.floor(base * 0.6));
       t.hp -= d2;
-      push(`${u.name}の連撃! ${t.name}に${d2}ダメージ`);
+      push(`${u.name}の連撃! ${t.name}に${d2}ダメージ`, {kind:'hit', side:(u === P ? 'p' : 'e'), label:'連撃', dmg:d2});
     }
     if (has('heal') && u.n % 4 === 0){
       const h = heal(u, Math.floor(u.maxhp * 0.25));
-      push(`${u.name}は回復して${h}HP回復`);
+      push(`${u.name}は回復して${h}HP回復`, {kind:'heal', side:(u === P ? 'p' : 'e'), amt:h});
     }
   };
-  for (turn = 1; turn <= MAX_TURNS; turn++){
-    push(`--- ターン${turn} ---`);
-    const order = E.spd > P.spd ? [E, P] : [P, E];
-    for (const u of order){
-      act(u, u === P ? E : P);
-      if (P.hp <= 0 || E.hp <= 0){
-        const win = E.hp <= 0;
-        push(win ? `${E.name}を撃破!` : `${P.name}は倒れた…`);
-        return {win, log, turns:turn};
-      }
+  const period = (u) => TIME_UNIT / Math.max(1, u.spd);
+  let pNext = period(P), eNext = period(E), time = 0, actions = 0;
+  while (true){
+    const pFirst = pNext <= eNext + 1e-9; // 同時刻ならあなたが先
+    const u = pFirst ? P : E, t = pFirst ? E : P;
+    time = pFirst ? pNext : eNext;
+    if (time > MAX_TIME + 1e-9) break;
+    turn = Math.floor(time);
+    act(u, t);
+    actions++;
+    if (pFirst) pNext += period(P); else eNext += period(E);
+    if (P.hp <= 0 || E.hp <= 0){
+      const win = E.hp <= 0;
+      push(win ? `${E.name}を撃破!` : `${P.name}は倒れた…`, {kind:'end', win});
+      return {win, log, turns:actions};
     }
   }
-  push('20ターン経過。決着がつかず敗北…');
-  return {win:false, log, turns:MAX_TURNS};
+  push('時間切れ。決着がつかず敗北…', {kind:'end', win:false});
+  return {win:false, log, turns:actions};
 }
 function skillCost(list){ return list.reduce((s,k)=>s+SKILLS[k].cost, 0); }
 function statSpent(alloc){ return STATS.reduce((s,k)=>s+(alloc[k]||0), 0); }
@@ -170,19 +235,31 @@ function solveMin(enemy, restr, cap){
 }
 // ==/CORE==
 
+// ステージごとの答えの例(ヒント用)
+const STAGE_SOLS = [{"alloc": {"hp": 0, "atk": 4, "def": 2, "spd": 0}, "skills": [], "min": 6}, {"alloc": {"hp": 0, "atk": 4, "def": 3, "spd": 1}, "skills": [], "min": 8}, {"alloc": {"hp": 0, "atk": 4, "def": 4, "spd": 4}, "skills": [], "min": 12}, {"alloc": {"hp": 0, "atk": 8, "def": 3, "spd": 2}, "skills": ["drain"], "min": 15}, {"alloc": {"hp": 1, "atk": 10, "def": 0, "spd": 7}, "skills": [], "min": 18}, {"alloc": {"hp": 2, "atk": 4, "def": 6, "spd": 7}, "skills": ["heal"], "min": 21}, {"alloc": {"hp": 2, "atk": 11, "def": 5, "spd": 6}, "skills": [], "min": 24}, {"alloc": {"hp": 0, "atk": 9, "def": 7, "spd": 5}, "skills": ["power", "heal", "drain"], "min": 27}];
+
 // 90日分のデイリー問題(gen_daily.js が生成・検証済み)
-const DAILY = /*DAILY_START*/[{"name":"ミラージュ","stats":{"hp":84,"atk":13,"def":1,"spd":3},"skills":[],"r":"noatk","par":16},{"name":"ゲートキーパー","stats":{"hp":166,"atk":12,"def":7,"spd":11},"skills":["double","drain"],"r":"nodef","par":20},{"name":"レガシー","stats":{"hp":171,"atk":14,"def":2,"spd":4},"skills":["pierce"],"r":"noskill","par":21},{"name":"スクラップ","stats":{"hp":60,"atk":17,"def":5,"spd":7},"skills":["heal"],"r":"nohp","par":16},{"name":"バグ","stats":{"hp":129,"atk":10,"def":5,"spd":5},"skills":["heal"],"r":"noskill","par":16},{"name":"ジャマー","stats":{"hp":188,"atk":12,"def":8,"spd":5},"skills":["power"],"r":"nodef","par":21},{"name":"バグ","stats":{"hp":127,"atk":10,"def":1,"spd":4},"skills":["heal","pierce"],"r":"noskill","par":16},{"name":"ジャマー","stats":{"hp":171,"atk":13,"def":2,"spd":6},"skills":["power"],"r":"nodef","par":19},{"name":"レガシー","stats":{"hp":110,"atk":18,"def":1,"spd":4},"skills":[],"r":"noskill","par":18},{"name":"ネオンウルフ","stats":{"hp":187,"atk":14,"def":6,"spd":2},"skills":["double"],"r":"nodef","par":20},{"name":"ネオンウルフ","stats":{"hp":137,"atk":19,"def":8,"spd":2},"skills":["drain","heal"],"r":"noskill","par":26},{"name":"オーバーロード","stats":{"hp":93,"atk":19,"def":3,"spd":10},"skills":["heal"],"r":"nohp","par":20},{"name":"サイバーゴーレム","stats":{"hp":86,"atk":8,"def":8,"spd":9},"skills":["drain","power"],"r":"nodef","par":14},{"name":"スクラップ","stats":{"hp":186,"atk":8,"def":1,"spd":5},"skills":["heal","double"],"r":"noskill","par":15},{"name":"バグ","stats":{"hp":174,"atk":12,"def":8,"spd":10},"skills":["power","double"],"r":"nodef","par":22},{"name":"ミラージュ","stats":{"hp":175,"atk":13,"def":2,"spd":10},"skills":["heal","power"],"r":"noskill","par":20},{"name":"レガシー","stats":{"hp":112,"atk":19,"def":5,"spd":8},"skills":[],"r":"nohp","par":21},{"name":"レガシー","stats":{"hp":180,"atk":9,"def":3,"spd":5},"skills":["pierce","double"],"r":"noskill","par":16},{"name":"ダークパケット","stats":{"hp":172,"atk":18,"def":5,"spd":11},"skills":["power"],"r":"nodef","par":25},{"name":"ノイズ","stats":{"hp":188,"atk":19,"def":7,"spd":5},"skills":["double","pierce"],"r":"noskill","par":32},{"name":"ミラージュ","stats":{"hp":169,"atk":18,"def":6,"spd":10},"skills":["power","double"],"r":"nodef","par":28},{"name":"ジャマー","stats":{"hp":145,"atk":9,"def":4,"spd":5},"skills":["heal"],"r":"noskill","par":15},{"name":"ゲートキーパー","stats":{"hp":99,"atk":19,"def":5,"spd":3},"skills":["heal","drain"],"r":"oneskill","par":19},{"name":"バグ","stats":{"hp":151,"atk":19,"def":7,"spd":2},"skills":[],"r":"noskill","par":23},{"name":"ファントム","stats":{"hp":113,"atk":17,"def":8,"spd":4},"skills":["heal"],"r":"nospd","par":21},{"name":"ファントム","stats":{"hp":134,"atk":12,"def":1,"spd":7},"skills":["power"],"r":"nodef","par":15},{"name":"サイバーゴーレム","stats":{"hp":114,"atk":14,"def":7,"spd":9},"skills":["heal","pierce"],"r":"noskill","par":23},{"name":"ノイズ","stats":{"hp":190,"atk":15,"def":2,"spd":5},"skills":[],"r":"nodef","par":18},{"name":"レガシー","stats":{"hp":161,"atk":14,"def":6,"spd":5},"skills":["power","pierce"],"r":"noskill","par":22},{"name":"ファントム","stats":{"hp":135,"atk":19,"def":8,"spd":3},"skills":["drain","heal"],"r":"oneskill","par":24},{"name":"ミラージュ","stats":{"hp":163,"atk":17,"def":7,"spd":4},"skills":["double","pierce"],"r":"noskill","par":28},{"name":"レガシー","stats":{"hp":113,"atk":13,"def":6,"spd":11},"skills":["double"],"r":"nodef","par":18},{"name":"ネオンウルフ","stats":{"hp":132,"atk":17,"def":4,"spd":11},"skills":["pierce","drain"],"r":"noskill","par":24},{"name":"コアガード","stats":{"hp":173,"atk":13,"def":4,"spd":4},"skills":["power"],"r":"nodef","par":18},{"name":"ダークパケット","stats":{"hp":190,"atk":10,"def":1,"spd":6},"skills":["drain","heal"],"r":"noskill","par":17},{"name":"バグ","stats":{"hp":94,"atk":14,"def":8,"spd":5},"skills":["power","drain"],"r":"nodef","par":19},{"name":"ストーカー","stats":{"hp":137,"atk":19,"def":4,"spd":9},"skills":["pierce"],"r":"nohp","par":22},{"name":"ミラージュ","stats":{"hp":68,"atk":18,"def":2,"spd":3},"skills":["pierce"],"r":"noatk","par":33},{"name":"ジャマー","stats":{"hp":166,"atk":12,"def":6,"spd":6},"skills":["power","pierce"],"r":"noskill","par":19},{"name":"ネオンウルフ","stats":{"hp":110,"atk":19,"def":2,"spd":2},"skills":[],"r":"oneskill","par":17},{"name":"サイバーゴーレム","stats":{"hp":102,"atk":17,"def":7,"spd":11},"skills":["double","power"],"r":"nodef","par":24},{"name":"コアガード","stats":{"hp":99,"atk":17,"def":1,"spd":6},"skills":["pierce"],"r":"noskill","par":17},{"name":"スクラップ","stats":{"hp":168,"atk":17,"def":5,"spd":11},"skills":["power"],"r":"nodef","par":24},{"name":"ストーカー","stats":{"hp":131,"atk":17,"def":2,"spd":2},"skills":["pierce","power"],"r":"noskill","par":22},{"name":"ファントム","stats":{"hp":154,"atk":10,"def":2,"spd":11},"skills":["power","drain"],"r":"nodef","par":15},{"name":"ジャマー","stats":{"hp":180,"atk":16,"def":7,"spd":10},"skills":["pierce","heal"],"r":"noskill","par":30},{"name":"ゲートキーパー","stats":{"hp":73,"atk":19,"def":3,"spd":11},"skills":[],"r":"nohp","par":18},{"name":"レガシー","stats":{"hp":113,"atk":16,"def":1,"spd":4},"skills":["pierce","double"],"r":"oneskill","par":18},{"name":"コアガード","stats":{"hp":100,"atk":17,"def":6,"spd":7},"skills":[],"r":"noskill","par":19},{"name":"ジャマー","stats":{"hp":72,"atk":19,"def":1,"spd":10},"skills":[],"r":"noatk","par":19},{"name":"コアガード","stats":{"hp":185,"atk":15,"def":2,"spd":7},"skills":["double","heal"],"r":"nodef","par":22},{"name":"ネオンウルフ","stats":{"hp":68,"atk":9,"def":2,"spd":10},"skills":[],"r":"noatk","par":14},{"name":"ダークパケット","stats":{"hp":164,"atk":19,"def":6,"spd":8},"skills":["double","drain"],"r":"nodef","par":27},{"name":"サイバーゴーレム","stats":{"hp":111,"atk":14,"def":6,"spd":11},"skills":["pierce"],"r":"noskill","par":19},{"name":"レガシー","stats":{"hp":62,"atk":19,"def":6,"spd":4},"skills":[],"r":"nospd","par":16},{"name":"センチネル","stats":{"hp":131,"atk":18,"def":7,"spd":11},"skills":["drain","heal"],"r":"noskill","par":25},{"name":"バグ","stats":{"hp":169,"atk":19,"def":4,"spd":2},"skills":["pierce","heal"],"r":"oneskill","par":24},{"name":"オーバーロード","stats":{"hp":133,"atk":13,"def":8,"spd":11},"skills":["drain","double"],"r":"nodef","par":21},{"name":"ジャマー","stats":{"hp":184,"atk":8,"def":3,"spd":7},"skills":["heal","double"],"r":"noskill","par":16},{"name":"サイバーゴーレム","stats":{"hp":82,"atk":18,"def":1,"spd":7},"skills":[],"r":"noatk","par":20},{"name":"レガシー","stats":{"hp":107,"atk":18,"def":5,"spd":7},"skills":["heal"],"r":"noskill","par":22},{"name":"バグ","stats":{"hp":158,"atk":9,"def":4,"spd":3},"skills":["drain","power"],"r":"nodef","par":14},{"name":"ストーカー","stats":{"hp":128,"atk":7,"def":5,"spd":9},"skills":["heal"],"r":"noskill","par":13},{"name":"グリッチ","stats":{"hp":69,"atk":18,"def":1,"spd":10},"skills":["double","power"],"r":"noatk","par":19},{"name":"グリッチ","stats":{"hp":149,"atk":8,"def":4,"spd":6},"skills":["double","power"],"r":"nodef","par":15},{"name":"センチネル","stats":{"hp":124,"atk":19,"def":7,"spd":3},"skills":[],"r":"noskill","par":22},{"name":"センチネル","stats":{"hp":64,"atk":18,"def":6,"spd":11},"skills":["heal"],"r":"nohp","par":18},{"name":"スクラップ","stats":{"hp":164,"atk":10,"def":5,"spd":10},"skills":["double","power"],"r":"nodef","par":19},{"name":"グリッチ","stats":{"hp":89,"atk":18,"def":3,"spd":6},"skills":["pierce","double"],"r":"nohp","par":21},{"name":"ファントム","stats":{"hp":168,"atk":16,"def":8,"spd":4},"skills":["double","drain"],"r":"nodef","par":24},{"name":"ネオンウルフ","stats":{"hp":87,"atk":17,"def":4,"spd":9},"skills":["drain"],"r":"noskill","par":18},{"name":"グリッチ","stats":{"hp":160,"atk":16,"def":2,"spd":7},"skills":["double","drain"],"r":"nodef","par":22},{"name":"レガシー","stats":{"hp":76,"atk":17,"def":1,"spd":9},"skills":[],"r":"noatk","par":17},{"name":"ストーカー","stats":{"hp":169,"atk":9,"def":2,"spd":7},"skills":["double","drain"],"r":"nodef","par":13},{"name":"ファントム","stats":{"hp":80,"atk":16,"def":2,"spd":2},"skills":["power","drain"],"r":"noskill","par":15},{"name":"バグ","stats":{"hp":68,"atk":16,"def":1,"spd":4},"skills":["double","power"],"r":"nohp","par":14},{"name":"スクラップ","stats":{"hp":170,"atk":12,"def":3,"spd":9},"skills":["power"],"r":"nodef","par":18},{"name":"ミラージュ","stats":{"hp":81,"atk":19,"def":2,"spd":4},"skills":["power"],"r":"nospd","par":19},{"name":"ミラージュ","stats":{"hp":120,"atk":18,"def":8,"spd":7},"skills":["heal"],"r":"noskill","par":25},{"name":"オーバーロード","stats":{"hp":86,"atk":19,"def":5,"spd":9},"skills":[],"r":"nohp","par":20},{"name":"サイバーゴーレム","stats":{"hp":170,"atk":9,"def":1,"spd":11},"skills":["pierce","heal"],"r":"noskill","par":18},{"name":"スクラップ","stats":{"hp":83,"atk":16,"def":3,"spd":7},"skills":["double","drain"],"r":"nodef","par":18},{"name":"サイバーゴーレム","stats":{"hp":122,"atk":14,"def":8,"spd":8},"skills":["heal"],"r":"noskill","par":21},{"name":"センチネル","stats":{"hp":188,"atk":14,"def":2,"spd":9},"skills":["power","drain"],"r":"nodef","par":21},{"name":"ネオンウルフ","stats":{"hp":162,"atk":15,"def":6,"spd":9},"skills":["heal","pierce"],"r":"noskill","par":27},{"name":"ダークパケット","stats":{"hp":154,"atk":8,"def":2,"spd":6},"skills":["double"],"r":"nodef","par":12},{"name":"ゲートキーパー","stats":{"hp":163,"atk":15,"def":3,"spd":5},"skills":["power","pierce"],"r":"noskill","par":22},{"name":"ダークパケット","stats":{"hp":187,"atk":13,"def":3,"spd":9},"skills":["power","heal"],"r":"nodef","par":21},{"name":"グリッチ","stats":{"hp":104,"atk":19,"def":4,"spd":2},"skills":["heal","drain"],"r":"noskill","par":20},{"name":"ゲートキーパー","stats":{"hp":166,"atk":11,"def":5,"spd":10},"skills":["power"],"r":"nodef","par":18}]/*DAILY_END*/;
+const DAILY = /*DAILY_START*/[{"name":"ポイズンマッシュ","stats":{"hp":164,"atk":7,"def":4,"spd":8},"skills":["pierce","double"],"r":"noatk","par":19,"sol":{"alloc":{"hp":0,"atk":0,"def":2,"spd":13},"skills":["pierce","heal"]}},{"name":"ブルースケルトン","stats":{"hp":137,"atk":10,"def":7,"spd":10},"skills":["heal","drain"],"r":"nospd","par":24,"sol":{"alloc":{"hp":0,"atk":17,"def":3,"spd":0},"skills":["power","drain"]}},{"name":"門番オーガ","stats":{"hp":84,"atk":11,"def":7,"spd":11},"skills":[],"r":"nodef","par":19,"sol":{"alloc":{"hp":4,"atk":10,"def":0,"spd":5},"skills":[]}},{"name":"ポイズンバット","stats":{"hp":173,"atk":12,"def":7,"spd":8},"skills":[],"r":"noatk","par":21,"sol":{"alloc":{"hp":0,"atk":0,"def":4,"spd":10},"skills":["pierce","double","heal"]}},{"name":"ブラッドヴァンプ","stats":{"hp":70,"atk":14,"def":8,"spd":11},"skills":["power"],"r":"nodef","par":21,"sol":{"alloc":{"hp":0,"atk":11,"def":0,"spd":8},"skills":["power"]}},{"name":"ボーンナイト","stats":{"hp":80,"atk":13,"def":3,"spd":8},"skills":["pierce","drain"],"r":"noatk","par":20,"sol":{"alloc":{"hp":5,"atk":0,"def":4,"spd":7},"skills":["pierce","heal"]}},{"name":"ブルースライム","stats":{"hp":92,"atk":10,"def":8,"spd":10},"skills":[],"r":"nospd","par":17,"sol":{"alloc":{"hp":4,"atk":10,"def":3,"spd":0},"skills":[]}},{"name":"ミラージュスライム","stats":{"hp":161,"atk":16,"def":8,"spd":4},"skills":["drain","double"],"r":"noskill","par":19,"sol":{"alloc":{"hp":1,"atk":8,"def":6,"spd":4},"skills":[]}},{"name":"ボーンナイト","stats":{"hp":189,"atk":18,"def":3,"spd":2},"skills":[],"r":"noatk","par":19,"sol":{"alloc":{"hp":1,"atk":0,"def":0,"spd":11},"skills":["pierce","double","heal"]}},{"name":"ナイトバット","stats":{"hp":169,"atk":16,"def":8,"spd":3},"skills":["double"],"r":"noskill","par":18,"sol":{"alloc":{"hp":1,"atk":7,"def":6,"spd":4},"skills":[]}},{"name":"エルダースケルトン","stats":{"hp":129,"atk":12,"def":7,"spd":4},"skills":[],"r":"noatk","par":17,"sol":{"alloc":{"hp":0,"atk":0,"def":2,"spd":11},"skills":["pierce","heal"]}},{"name":"ポイズンバット","stats":{"hp":88,"atk":16,"def":4,"spd":8},"skills":["power"],"r":"nospd","par":20,"sol":{"alloc":{"hp":3,"atk":11,"def":6,"spd":0},"skills":[]}},{"name":"ブルースライム","stats":{"hp":171,"atk":9,"def":2,"spd":5},"skills":["double","heal"],"r":"noatk","par":29,"sol":{"alloc":{"hp":0,"atk":0,"def":1,"spd":21},"skills":["power","double","heal"]}},{"name":"門番オーガ","stats":{"hp":137,"atk":14,"def":5,"spd":8},"skills":[],"r":"noskill","par":19,"sol":{"alloc":{"hp":1,"atk":7,"def":5,"spd":6},"skills":[]}},{"name":"ナイトバット","stats":{"hp":92,"atk":18,"def":7,"spd":7},"skills":["pierce"],"r":"noatk","par":23,"sol":{"alloc":{"hp":7,"atk":0,"def":6,"spd":6},"skills":["pierce","heal"]}},{"name":"ミラージュスライム","stats":{"hp":169,"atk":17,"def":3,"spd":2},"skills":["double"],"r":"noskill","par":14,"sol":{"alloc":{"hp":0,"atk":5,"def":4,"spd":5},"skills":[]}},{"name":"ナイトバット","stats":{"hp":145,"atk":16,"def":8,"spd":4},"skills":["pierce","double"],"r":"noatk","par":21,"sol":{"alloc":{"hp":3,"atk":0,"def":3,"spd":11},"skills":["pierce","heal"]}},{"name":"ダークマッシュ","stats":{"hp":156,"atk":9,"def":5,"spd":11},"skills":["double"],"r":"noskill","par":19,"sol":{"alloc":{"hp":2,"atk":7,"def":3,"spd":7},"skills":[]}},{"name":"ロックガード","stats":{"hp":115,"atk":17,"def":6,"spd":11},"skills":[],"r":"nospd","par":26,"sol":{"alloc":{"hp":7,"atk":11,"def":6,"spd":0},"skills":["heal"]}},{"name":"ストーンゴーレム","stats":{"hp":159,"atk":18,"def":5,"spd":11},"skills":[],"r":"nodef","par":28,"sol":{"alloc":{"hp":7,"atk":11,"def":0,"spd":8},"skills":["power"]}},{"name":"ブルースケルトン","stats":{"hp":146,"atk":13,"def":7,"spd":10},"skills":[],"r":"noskill","par":21,"sol":{"alloc":{"hp":1,"atk":9,"def":4,"spd":7},"skills":[]}},{"name":"ミラージュスライム","stats":{"hp":152,"atk":18,"def":6,"spd":2},"skills":["pierce"],"r":"nospd","par":16,"sol":{"alloc":{"hp":2,"atk":11,"def":1,"spd":0},"skills":["power"]}},{"name":"アイアンゴーレム","stats":{"hp":160,"atk":16,"def":3,"spd":11},"skills":[],"r":"noatk","par":25,"sol":{"alloc":{"hp":2,"atk":0,"def":6,"spd":13},"skills":["pierce","heal"]}},{"name":"ブルースケルトン","stats":{"hp":104,"atk":11,"def":8,"spd":8},"skills":["double"],"r":"noskill","par":17,"sol":{"alloc":{"hp":0,"atk":8,"def":4,"spd":5},"skills":[]}},{"name":"門番オーガ","stats":{"hp":97,"atk":7,"def":8,"spd":10},"skills":[],"r":"noatk","par":13,"sol":{"alloc":{"hp":0,"atk":0,"def":2,"spd":7},"skills":["pierce","heal"]}},{"name":"ボーンナイト","stats":{"hp":177,"atk":17,"def":5,"spd":6},"skills":["heal","drain"],"r":"nodef","par":23,"sol":{"alloc":{"hp":0,"atk":10,"def":0,"spd":9},"skills":["power","drain"]}},{"name":"アイアンゴーレム","stats":{"hp":183,"atk":7,"def":2,"spd":11},"skills":["power","drain"],"r":"noatk","par":16,"sol":{"alloc":{"hp":1,"atk":0,"def":2,"spd":9},"skills":["power","heal"]}},{"name":"ブルースライム","stats":{"hp":190,"atk":15,"def":2,"spd":5},"skills":[],"r":"nodef","par":18,"sol":{"alloc":{"hp":3,"atk":4,"def":0,"spd":9},"skills":["heal"]}},{"name":"ミラージュスライム","stats":{"hp":106,"atk":12,"def":5,"spd":10},"skills":["heal","double"],"r":"noskill","par":20,"sol":{"alloc":{"hp":0,"atk":9,"def":4,"spd":7},"skills":[]}},{"name":"ロックガード","stats":{"hp":160,"atk":16,"def":8,"spd":3},"skills":["double","heal"],"r":"nospd","par":20,"sol":{"alloc":{"hp":0,"atk":12,"def":6,"spd":0},"skills":["drain"]}},{"name":"ストーンゴーレム","stats":{"hp":99,"atk":15,"def":4,"spd":10},"skills":[],"r":"nodef","par":21,"sol":{"alloc":{"hp":4,"atk":10,"def":0,"spd":7},"skills":[]}},{"name":"ブラッドヴァンプ","stats":{"hp":117,"atk":18,"def":4,"spd":9},"skills":[],"r":"nospd","par":23,"sol":{"alloc":{"hp":7,"atk":10,"def":6,"spd":0},"skills":[]}},{"name":"ストーンゴーレム","stats":{"hp":88,"atk":17,"def":3,"spd":6},"skills":["double"],"r":"noatk","par":20,"sol":{"alloc":{"hp":3,"atk":0,"def":6,"spd":7},"skills":["pierce","heal"]}},{"name":"門番オーガ","stats":{"hp":160,"atk":19,"def":6,"spd":6},"skills":[],"r":"nodef","par":22,"sol":{"alloc":{"hp":4,"atk":9,"def":0,"spd":7},"skills":["heal"]}},{"name":"キングオーガ","stats":{"hp":166,"atk":8,"def":1,"spd":8},"skills":["power"],"r":"noskill","par":13,"sol":{"alloc":{"hp":1,"atk":5,"def":3,"spd":4},"skills":[]}},{"name":"ナイトバット","stats":{"hp":156,"atk":16,"def":4,"spd":10},"skills":[],"r":"nospd","par":23,"sol":{"alloc":{"hp":3,"atk":10,"def":6,"spd":0},"skills":["power","drain"]}},{"name":"ポイズンバット","stats":{"hp":141,"atk":13,"def":7,"spd":10},"skills":[],"r":"nodef","par":24,"sol":{"alloc":{"hp":4,"atk":11,"def":0,"spd":7},"skills":["power"]}},{"name":"エルダースケルトン","stats":{"hp":75,"atk":9,"def":2,"spd":9},"skills":["heal","drain"],"r":"noatk","par":23,"sol":{"alloc":{"hp":0,"atk":0,"def":2,"spd":17},"skills":["power","heal"]}},{"name":"ダークヴァンプ","stats":{"hp":65,"atk":18,"def":8,"spd":6},"skills":["drain","pierce"],"r":"nospd","par":21,"sol":{"alloc":{"hp":3,"atk":12,"def":6,"spd":0},"skills":[]}},{"name":"ブルースケルトン","stats":{"hp":64,"atk":10,"def":4,"spd":5},"skills":["power"],"r":"noatk","par":12,"sol":{"alloc":{"hp":1,"atk":0,"def":3,"spd":4},"skills":["pierce","heal"]}},{"name":"ブラッドヴァンプ","stats":{"hp":83,"atk":8,"def":2,"spd":9},"skills":["pierce","double"],"r":"nospd","par":14,"sol":{"alloc":{"hp":3,"atk":8,"def":3,"spd":0},"skills":[]}},{"name":"キングオーガ","stats":{"hp":152,"atk":17,"def":7,"spd":4},"skills":["drain"],"r":"noatk","par":22,"sol":{"alloc":{"hp":0,"atk":0,"def":4,"spd":14},"skills":["pierce","heal"]}},{"name":"ナイトバット","stats":{"hp":125,"atk":10,"def":1,"spd":9},"skills":[],"r":"nodef","par":16,"sol":{"alloc":{"hp":5,"atk":3,"def":0,"spd":6},"skills":["heal"]}},{"name":"ブルースケルトン","stats":{"hp":142,"atk":14,"def":6,"spd":7},"skills":["pierce"],"r":"nospd","par":24,"sol":{"alloc":{"hp":7,"atk":10,"def":5,"spd":0},"skills":["power"]}},{"name":"門番オーガ","stats":{"hp":96,"atk":18,"def":3,"spd":4},"skills":["pierce"],"r":"noatk","par":19,"sol":{"alloc":{"hp":2,"atk":0,"def":6,"spd":7},"skills":["pierce","heal"]}},{"name":"ナイトバット","stats":{"hp":111,"atk":9,"def":3,"spd":8},"skills":["pierce"],"r":"nospd","par":16,"sol":{"alloc":{"hp":2,"atk":7,"def":3,"spd":0},"skills":["power","drain"]}},{"name":"ポイズンバット","stats":{"hp":158,"atk":8,"def":8,"spd":11},"skills":["pierce"],"r":"noskill","par":20,"sol":{"alloc":{"hp":2,"atk":10,"def":3,"spd":5},"skills":[]}},{"name":"アイアンゴーレム","stats":{"hp":61,"atk":12,"def":5,"spd":9},"skills":["power","pierce"],"r":"nodef","par":17,"sol":{"alloc":{"hp":0,"atk":11,"def":0,"spd":6},"skills":[]}},{"name":"ストーンゴーレム","stats":{"hp":176,"atk":15,"def":1,"spd":5},"skills":[],"r":"nospd","par":15,"sol":{"alloc":{"hp":3,"atk":5,"def":5,"spd":0},"skills":["heal"]}},{"name":"アイアンゴーレム","stats":{"hp":97,"atk":8,"def":3,"spd":10},"skills":["double"],"r":"noatk","par":15,"sol":{"alloc":{"hp":1,"atk":0,"def":3,"spd":7},"skills":["pierce","heal"]}},{"name":"アイアンゴーレム","stats":{"hp":159,"atk":19,"def":6,"spd":8},"skills":[],"r":"nodef","par":25,"sol":{"alloc":{"hp":3,"atk":11,"def":0,"spd":7},"skills":["power","drain"]}},{"name":"ナイトバット","stats":{"hp":138,"atk":14,"def":6,"spd":8},"skills":["pierce","power"],"r":"noatk","par":24,"sol":{"alloc":{"hp":3,"atk":0,"def":5,"spd":12},"skills":["pierce","heal"]}},{"name":"ダークヴァンプ","stats":{"hp":164,"atk":19,"def":6,"spd":8},"skills":["double","drain"],"r":"nodef","par":28,"sol":{"alloc":{"hp":5,"atk":12,"def":0,"spd":9},"skills":["power"]}},{"name":"ブラッドヴァンプ","stats":{"hp":180,"atk":13,"def":8,"spd":4},"skills":["power"],"r":"nospd","par":18,"sol":{"alloc":{"hp":4,"atk":8,"def":4,"spd":0},"skills":["heal"]}},{"name":"ブルースライム","stats":{"hp":157,"atk":14,"def":6,"spd":9},"skills":["pierce","drain"],"r":"nodef","par":24,"sol":{"alloc":{"hp":3,"atk":11,"def":0,"spd":6},"skills":["power","drain"]}},{"name":"ロックガード","stats":{"hp":131,"atk":18,"def":7,"spd":11},"skills":["drain","heal"],"r":"noskill","par":28,"sol":{"alloc":{"hp":1,"atk":10,"def":6,"spd":11},"skills":[]}},{"name":"門番オーガ","stats":{"hp":123,"atk":18,"def":3,"spd":8},"skills":["pierce","power"],"r":"noatk","par":26,"sol":{"alloc":{"hp":7,"atk":0,"def":6,"spd":9},"skills":["pierce","heal"]}},{"name":"キングオーガ","stats":{"hp":133,"atk":13,"def":8,"spd":11},"skills":["drain","double"],"r":"nodef","par":27,"sol":{"alloc":{"hp":6,"atk":11,"def":0,"spd":8},"skills":["power"]}},{"name":"キングオーガ","stats":{"hp":130,"atk":10,"def":2,"spd":9},"skills":["drain"],"r":"noskill","par":14,"sol":{"alloc":{"hp":1,"atk":4,"def":3,"spd":6},"skills":[]}},{"name":"ダークマッシュ","stats":{"hp":93,"atk":11,"def":8,"spd":10},"skills":[],"r":"nospd","par":18,"sol":{"alloc":{"hp":4,"atk":10,"def":4,"spd":0},"skills":[]}},{"name":"キングオーガ","stats":{"hp":115,"atk":7,"def":2,"spd":10},"skills":["heal"],"r":"nodef","par":17,"sol":{"alloc":{"hp":2,"atk":8,"def":0,"spd":7},"skills":[]}},{"name":"アイアンゴーレム","stats":{"hp":136,"atk":16,"def":5,"spd":5},"skills":["double","pierce"],"r":"nospd","par":22,"sol":{"alloc":{"hp":5,"atk":9,"def":6,"spd":0},"skills":["power"]}},{"name":"ダークマッシュ","stats":{"hp":156,"atk":16,"def":6,"spd":7},"skills":["power","double"],"r":"noatk","par":24,"sol":{"alloc":{"hp":2,"atk":0,"def":6,"spd":12},"skills":["pierce","heal"]}},{"name":"ナイトバット","stats":{"hp":176,"atk":14,"def":7,"spd":9},"skills":[],"r":"noskill","par":22,"sol":{"alloc":{"hp":2,"atk":9,"def":5,"spd":6},"skills":[]}},{"name":"エルダースケルトン","stats":{"hp":188,"atk":16,"def":3,"spd":3},"skills":["power","double"],"r":"noatk","par":23,"sol":{"alloc":{"hp":0,"atk":0,"def":4,"spd":15},"skills":["pierce","heal"]}},{"name":"アイアンゴーレム","stats":{"hp":118,"atk":16,"def":8,"spd":9},"skills":[],"r":"nodef","par":24,"sol":{"alloc":{"hp":4,"atk":12,"def":0,"spd":8},"skills":[]}},{"name":"ブラッドヴァンプ","stats":{"hp":79,"atk":17,"def":7,"spd":9},"skills":["power","drain"],"r":"noatk","par":26,"sol":{"alloc":{"hp":3,"atk":0,"def":6,"spd":13},"skills":["pierce","heal"]}},{"name":"ボーンナイト","stats":{"hp":164,"atk":10,"def":5,"spd":10},"skills":["double","power"],"r":"nodef","par":24,"sol":{"alloc":{"hp":2,"atk":11,"def":0,"spd":7},"skills":["power","drain"]}},{"name":"ブラッドヴァンプ","stats":{"hp":182,"atk":17,"def":2,"spd":9},"skills":["power","double"],"r":"nospd","par":31,"sol":{"alloc":{"hp":10,"atk":11,"def":6,"spd":0},"skills":["power","heal"]}},{"name":"ブルースケルトン","stats":{"hp":168,"atk":16,"def":8,"spd":4},"skills":["double","drain"],"r":"nodef","par":21,"sol":{"alloc":{"hp":2,"atk":8,"def":0,"spd":9},"skills":["heal"]}},{"name":"ボーンナイト","stats":{"hp":146,"atk":15,"def":8,"spd":6},"skills":[],"r":"noskill","par":19,"sol":{"alloc":{"hp":1,"atk":7,"def":5,"spd":6},"skills":[]}},{"name":"ポイズンマッシュ","stats":{"hp":113,"atk":10,"def":8,"spd":10},"skills":["power","pierce"],"r":"nospd","par":23,"sol":{"alloc":{"hp":6,"atk":12,"def":3,"spd":0},"skills":["heal"]}},{"name":"ポイズンバット","stats":{"hp":75,"atk":10,"def":4,"spd":9},"skills":[],"r":"nodef","par":15,"sol":{"alloc":{"hp":1,"atk":8,"def":0,"spd":6},"skills":[]}},{"name":"エルダースケルトン","stats":{"hp":142,"atk":7,"def":4,"spd":9},"skills":[],"r":"nospd","par":12,"sol":{"alloc":{"hp":3,"atk":5,"def":2,"spd":0},"skills":["heal"]}},{"name":"ボーンナイト","stats":{"hp":150,"atk":18,"def":2,"spd":9},"skills":["drain"],"r":"nodef","par":24,"sol":{"alloc":{"hp":5,"atk":6,"def":0,"spd":9},"skills":["power","heal"]}},{"name":"ポイズンバット","stats":{"hp":174,"atk":18,"def":8,"spd":4},"skills":["pierce"],"r":"noatk","par":22,"sol":{"alloc":{"hp":4,"atk":0,"def":0,"spd":14},"skills":["pierce","heal"]}},{"name":"ボーンナイト","stats":{"hp":181,"atk":12,"def":5,"spd":6},"skills":["drain"],"r":"nodef","par":19,"sol":{"alloc":{"hp":2,"atk":6,"def":0,"spd":9},"skills":["heal"]}},{"name":"ブラッドヴァンプ","stats":{"hp":79,"atk":16,"def":5,"spd":11},"skills":[],"r":"nospd","par":21,"sol":{"alloc":{"hp":4,"atk":11,"def":6,"spd":0},"skills":[]}},{"name":"ストーンゴーレム","stats":{"hp":137,"atk":11,"def":7,"spd":9},"skills":[],"r":"nodef","par":21,"sol":{"alloc":{"hp":4,"atk":7,"def":0,"spd":8},"skills":["heal"]}},{"name":"エルダースケルトン","stats":{"hp":160,"atk":17,"def":5,"spd":10},"skills":[],"r":"noskill","par":24,"sol":{"alloc":{"hp":2,"atk":8,"def":6,"spd":8},"skills":[]}},{"name":"ブルースライム","stats":{"hp":91,"atk":15,"def":2,"spd":9},"skills":[],"r":"nospd","par":17,"sol":{"alloc":{"hp":5,"atk":7,"def":5,"spd":0},"skills":[]}},{"name":"ブラッドヴァンプ","stats":{"hp":80,"atk":11,"def":5,"spd":10},"skills":["heal","power"],"r":"nodef","par":20,"sol":{"alloc":{"hp":2,"atk":11,"def":0,"spd":7},"skills":[]}},{"name":"ボーンナイト","stats":{"hp":142,"atk":19,"def":2,"spd":9},"skills":["pierce","drain"],"r":"nospd","par":30,"sol":{"alloc":{"hp":4,"atk":15,"def":7,"spd":0},"skills":["power","drain"]}},{"name":"ポイズンマッシュ","stats":{"hp":184,"atk":15,"def":2,"spd":4},"skills":[],"r":"noatk","par":17,"sol":{"alloc":{"hp":0,"atk":0,"def":4,"spd":9},"skills":["power","heal"]}},{"name":"ダークマッシュ","stats":{"hp":169,"atk":19,"def":6,"spd":7},"skills":[],"r":"noskill","par":23,"sol":{"alloc":{"hp":2,"atk":9,"def":7,"spd":5},"skills":[]}},{"name":"ストーンゴーレム","stats":{"hp":188,"atk":17,"def":1,"spd":2},"skills":[],"r":"nospd","par":12,"sol":{"alloc":{"hp":0,"atk":4,"def":6,"spd":0},"skills":["heal"]}},{"name":"門番オーガ","stats":{"hp":163,"atk":15,"def":3,"spd":5},"skills":["power","pierce"],"r":"noskill","par":19,"sol":{"alloc":{"hp":2,"atk":7,"def":5,"spd":5},"skills":[]}},{"name":"ストーンゴーレム","stats":{"hp":179,"atk":14,"def":8,"spd":4},"skills":["double","drain"],"r":"noatk","par":23,"sol":{"alloc":{"hp":0,"atk":0,"def":5,"spd":11},"skills":["pierce","double","heal"]}},{"name":"ロックガード","stats":{"hp":187,"atk":17,"def":6,"spd":3},"skills":[],"r":"noskill","par":17,"sol":{"alloc":{"hp":1,"atk":7,"def":5,"spd":4},"skills":[]}},{"name":"ダークヴァンプ","stats":{"hp":159,"atk":14,"def":8,"spd":10},"skills":["double"],"r":"nospd","par":27,"sol":{"alloc":{"hp":6,"atk":12,"def":5,"spd":0},"skills":["power","heal"]}}]/*DAILY_END*/;
 
 // ---------- セーブ ----------
 const KEY = 'warifuri_battle_v1';
 function newAlloc(){ return {hp:0,atk:0,def:0,spd:0,skills:[]}; }
 function defaultSave(){
-  return {cleared:0, tries:STAGES.map(()=>0), best:STAGES.map(()=>null), alloc:newAlloc(), daily:null};
+  return {cleared:0, tries:STAGES.map(()=>0), best:STAGES.map(()=>null), alloc:newAlloc(), daily:null,
+    medals:0, owned:{sword:0,shield:0,armor:0,boots:0}, items:{hpup:0,atkup:0}, armed:{hpup:false,atkup:false}, ach:{}, forms:{},
+    st:{wins:0,losses:0,dailyClears:0,dailyPerfect:0,nohintPerfect:0,streak:0,maxStreak:0,lastDailyDay:-9,medalsTotal:0,bought:0}};
 }
 function load(){
   try{
     const s = JSON.parse(localStorage.getItem(KEY));
-    if (s && s.alloc && s.tries){ if (!('daily' in s)) s.daily = null; return s; }
+    if (s && s.alloc && s.tries){
+      const d = defaultSave();
+      for (const k of Object.keys(d)){
+        if (!(k in s)) s[k] = d[k];
+        else if (d[k] && typeof d[k] === 'object' && !Array.isArray(d[k]) && k !== 'alloc') s[k] = Object.assign({}, d[k], s[k]);
+      }
+      return s;
+    }
   }catch(e){}
   return defaultSave();
 }
@@ -193,13 +270,231 @@ const spentPts = () => statSpent(save.alloc) + skillCost(save.alloc.skills);
 const remainPts = () => totalPts() - spentPts();
 function resetAlloc(){ save.alloc = newAlloc(); persist(); }
 if (remainPts() < 0) resetAlloc();
+const hasProgress = () => save.cleared > 0 || save.tries.some(t => t > 0);
 
 const app = document.getElementById('app');
 const $ = (id) => document.getElementById(id);
 let timer = null;
 function stopTimer(){ if (timer){ clearInterval(timer); timer = null; } }
 
-// ---------- ステージ選択 ----------
+// ---------- キャラクター(32x32 ドット絵) ----------
+// ===== 32x32 ドット絵エンジン =====
+const ART_N = 32, OUTLINE = '#0b0d16';
+const R = (x,y,w,h,c) => ['r',x,y,w,h,c];
+const E = (cx,cy,rx,ry,c) => ['e',cx,cy,rx,ry,c];
+const P = (x,y,c) => ['p',x,y,c];
+function hexMix(h, t, a){
+  const p = (s,i) => parseInt(s.slice(1 + i * 2, 3 + i * 2), 16);
+  const f = (i) => Math.round(p(h,i) + (p(t,i) - p(h,i)) * a).toString(16).padStart(2, '0');
+  return '#' + f(0) + f(1) + f(2);
+}
+function rasterize(ops){
+  const N = ART_N, g = Array.from({length:N}, () => Array(N).fill(null));
+  const put = (x,y,c) => { if (x >= 0 && y >= 0 && x < N && y < N) g[y][x] = c; };
+  for (const o of ops){
+    if (o[0] === 'r'){ for (let y = o[2]; y < o[2] + o[4]; y++) for (let x = o[1]; x < o[1] + o[3]; x++) put(x, y, o[5]); }
+    else if (o[0] === 'e'){
+      const [, cx, cy, rx, ry, c] = o;
+      for (let y = Math.floor(cy - ry); y <= Math.ceil(cy + ry); y++) for (let x = Math.floor(cx - rx); x <= Math.ceil(cx + rx); x++){
+        const dx = (x + .5 - cx) / rx, dy = (y + .5 - cy) / ry;
+        if (dx * dx + dy * dy <= 1) put(x, y, c);
+      }
+    } else put(o[1], o[2], o[3]);
+  }
+  const at = (x,y) => (x < 0 || y < 0 || x >= N || y >= N) ? null : g[y][x];
+  const o2 = Array.from({length:N}, () => Array(N).fill(null));
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++){
+    const c = g[y][x];
+    if (!c) continue;
+    if (c[0] === '!'){ o2[y][x] = c.slice(1); continue; }
+    let col = c;
+    if (!at(x, y - 1)) col = hexMix(col, '#ffffff', .3); else if (!at(x - 1, y)) col = hexMix(col, '#ffffff', .15);
+    if (!at(x, y + 1)) col = hexMix(col, '#000000', .32); else if (!at(x + 1, y)) col = hexMix(col, '#000000', .18);
+    o2[y][x] = col;
+  }
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++){
+    if (o2[y][x]) continue;
+    if (at(x - 1, y) || at(x + 1, y) || at(x, y - 1) || at(x, y + 1)) o2[y][x] = OUTLINE;
+  }
+  return o2;
+}
+function gridSvg(o2, style){
+  let r = '';
+  for (let y = 0; y < ART_N; y++){
+    let x = 0;
+    while (x < ART_N){
+      const c = o2[y][x];
+      if (!c){ x++; continue; }
+      let w = 1;
+      while (x + w < ART_N && o2[y][x + w] === c) w++;
+      r += `<rect x="${x}" y="${y}" width="${w}" height="1" fill="${c}"/>`;
+      x += w;
+    }
+  }
+  return `<svg class="spr" viewBox="0 0 32 32" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"${style || ''}>${r}</svg>`;
+}
+
+// ---- 敵 ----
+const ART = {
+  // スライム
+  e0: [
+    E(16,22,12,7.5,'#4fd16a'), E(16,16,8,7,'#4fd16a'), E(17,12.5,3,2,'#4fd16a'),
+    R(11,19,3,5,'!#10131c'), R(19,19,3,5,'!#10131c'), P(11,19,'!#ffffff'), P(19,19,'!#ffffff'),
+    R(14,26,5,1,'!#10131c'), R(11,13,3,2,'!#e2ffe8'), P(10,15,'!#e2ffe8'), R(24,23,2,2,'!#a8f0b8')
+  ],
+  // ストーンガード
+  e1: [
+    R(9,14,14,12,'#8c93a3'), R(11,6,10,9,'#a3abbc'), R(4,15,5,10,'#7a8192'), R(23,15,5,10,'#7a8192'),
+    R(10,25,5,5,'#6d7586'), R(17,25,5,5,'#6d7586'),
+    R(13,9,2,2,'!#ffcf40'), R(18,9,2,2,'!#ffcf40'), R(13,13,6,1,'!#4a505e'),
+    R(12,17,3,1,'!#5c6270'), R(17,19,3,1,'!#5c6270'), P(15,18,'!#5c6270'),
+    R(21,12,8,14,'#4d68b0'), R(22,13,6,12,'#6d8bd8'), R(24,17,2,4,'!#ffd34a'), R(23,18,4,2,'!#ffd34a')
+  ],
+  // ダークバット
+  e2: [
+    R(2,10,9,2,'#4a2f7a'), R(3,12,9,3,'#4a2f7a'), R(5,15,7,3,'#4a2f7a'), R(7,18,5,3,'#4a2f7a'), R(9,21,3,2,'#4a2f7a'),
+    R(21,10,9,2,'#4a2f7a'), R(20,12,9,3,'#4a2f7a'), R(20,15,7,3,'#4a2f7a'), R(20,18,5,3,'#4a2f7a'), R(20,21,3,2,'#4a2f7a'),
+    E(16,19,5,6.5,'#6a45a8'), E(16,12,5.5,5,'#6a45a8'), R(11,5,3,5,'#6a45a8'), R(18,5,3,5,'#6a45a8'), R(12,4,1,2,'#6a45a8'), R(19,4,1,2,'#6a45a8'),
+    R(12,11,3,2,'!#ff5050'), R(18,11,3,2,'!#ff5050'), R(14,15,1,2,'!#ffffff'), R(18,15,1,2,'!#ffffff'),
+    R(14,20,5,3,'#a587e0')
+  ],
+  // ヒールマッシュ
+  e3: [
+    R(11,16,10,11,'#f3e3c8'), R(10,27,5,3,'#d9c6a0'), R(17,27,5,3,'#d9c6a0'),
+    E(16,13,12.5,8.5,'#d94a6a'), R(4,14,24,2,'#d94a6a'),
+    E(9,12,2,1.5,'!#fff3f6'), E(23,11,2,1.5,'!#fff3f6'), E(20,16,1.5,1,'!#fff3f6'),
+    R(15,8,3,8,'!#4fe07a'), R(12,10,9,3,'!#4fe07a'),
+    R(12,20,2,4,'!#10131c'), R(18,20,2,4,'!#10131c'), P(12,20,'!#ffffff'), P(18,20,'!#ffffff'), R(14,25,4,1,'!#10131c')
+  ],
+  // オーガ
+  e4: [
+    R(24,4,5,20,'#8a5a2b'), R(23,3,7,4,'#a8743a'), P(25,10,'!#d8d8e0'), P(27,14,'!#d8d8e0'), P(25,18,'!#d8d8e0'),
+    R(10,27,4,3,'#a33a2a'), R(17,27,4,3,'#a33a2a'),
+    E(15,21,9,8,'#c84f3a'), R(9,24,13,3,'#7a5a2a'),
+    R(5,16,5,9,'#c84f3a'), R(20,16,5,8,'#c84f3a'),
+    R(9,2,3,5,'#f2e6c9'), R(19,2,3,5,'#f2e6c9'),
+    E(15,10,8,7,'#d9604a'),
+    R(10,8,4,2,'!#ffe060'), R(17,8,4,2,'!#ffe060'), P(12,9,'!#10131c'), P(19,9,'!#10131c'), R(9,6,6,1,'!#6a1f16'), R(16,6,6,1,'!#6a1f16'),
+    R(11,13,8,3,'!#4a1410'), R(11,12,1,2,'!#fff7e0'), R(18,12,1,2,'!#fff7e0')
+  ],
+  // ヴァンパイア
+  e5: [
+    R(5,13,22,17,'#34154f'), R(4,10,5,10,'#34154f'), R(23,10,5,10,'#34154f'),
+    R(11,16,10,13,'#a02040'), R(14,16,4,3,'#f0e6ee'),
+    E(16,10,6.5,6.5,'#f1e7ef'), R(10,3,13,5,'#1a1020'), R(10,5,3,4,'#1a1020'), R(20,5,3,4,'#1a1020'),
+    R(12,10,3,2,'!#ff3050'), R(18,10,3,2,'!#ff3050'), P(13,10,'!#ffffff'), P(19,10,'!#ffffff'),
+    R(13,14,1,2,'!#ffffff'), R(18,14,1,2,'!#ffffff'), R(14,14,4,1,'!#8a1030'),
+    E(16,22,1.5,1.5,'!#ffcf40')
+  ],
+  // 双剣スケルトン
+  e6: [
+    R(4,5,2,15,'#c8d4ea'), R(3,4,4,2,'#e6eeff'), R(2,19,6,2,'#c99a2e'), R(4,21,2,3,'#6b4423'),
+    R(26,5,2,15,'#c8d4ea'), R(25,4,4,2,'#e6eeff'), R(24,19,6,2,'#c99a2e'), R(26,21,2,3,'#6b4423'),
+    R(15,15,2,10,'#e8e2cf'), R(11,16,10,2,'#e8e2cf'), R(12,19,8,2,'#e8e2cf'), R(12,22,8,2,'#e8e2cf'),
+    R(12,25,8,2,'#d8d2bd'), R(12,27,2,3,'#e8e2cf'), R(18,27,2,3,'#e8e2cf'),
+    R(8,16,4,2,'#e8e2cf'), R(20,16,4,2,'#e8e2cf'), R(6,17,3,3,'#e8e2cf'), R(23,17,3,3,'#e8e2cf'),
+    E(16,9,6.5,6,'#f4efe0'), R(12,14,9,3,'#e8e2cf'),
+    R(12,8,3,3,'!#10131c'), R(18,8,3,3,'!#10131c'), P(13,9,'!#ff5050'), P(19,9,'!#ff5050'), R(15,12,2,2,'!#4a4636'),
+    R(13,15,1,2,'!#10131c'), R(15,15,1,2,'!#10131c'), R(17,15,1,2,'!#10131c'), R(19,15,1,2,'!#10131c')
+  ],
+  // 魔王ゼロ
+  e7: [
+    R(4,2,4,9,'#ece3c8'), R(6,9,3,3,'#ece3c8'), R(24,2,4,9,'#ece3c8'), R(23,9,3,3,'#ece3c8'),
+    R(7,14,18,15,'#2a1b4d'), R(5,13,7,5,'#6a3fb0'), R(20,13,7,5,'#6a3fb0'), R(11,26,10,4,'#1e1238'),
+    E(16,10,7.5,6.5,'#3a2a66'), R(10,6,12,3,'#54398f'),
+    R(11,9,4,2,'!#ff4fd8'), R(18,9,4,2,'!#ff4fd8'), P(12,9,'!#ffffff'), P(19,9,'!#ffffff'), R(13,14,7,1,'!#ff4fd8'),
+    R(14,17,4,4,'#c0a0ff'), P(15,18,'!#ffffff'),
+    E(26,23,3.5,3.5,'#ff4fd8'), E(26,23,1.5,1.5,'!#ffe0f8'), R(22,19,4,3,'#2a1b4d')
+  ]
+};
+
+// ---- 主人公(形態・装備でレイヤーを重ねる) ----
+const HERO_BASE = [
+  R(4,14,7,13,'#b0283a'), R(5,26,6,2,'#b0283a'),
+  R(11,24,4,4,'#4a3b6b'), R(17,24,4,4,'#4a3b6b'), R(10,28,5,2,'#6b4423'), R(17,28,5,2,'#6b4423'),
+  R(10,16,12,9,'#3b6fd1'), R(10,22,12,2,'#7a4a1f'), R(15,22,2,2,'!#f0c040'),
+  R(8,17,3,6,'#3b6fd1'), R(21,17,5,3,'#3b6fd1'), R(25,18,3,3,'#f2c9a0'), R(8,22,3,2,'#f2c9a0'),
+  E(16,8,9,7,'#f0c040'), R(11,2,2,3,'#f0c040'), R(15,1,2,3,'#f0c040'), R(19,2,2,3,'#f0c040'),
+  E(17,12,6.5,5.5,'#f2c9a0'),
+  R(8,8,17,2,'#d33a3a'), R(6,9,3,5,'#d33a3a'),
+  R(19,11,2,3,'!#1a1a2e'), P(19,11,'!#ffffff'), R(22,16,2,1,'!#a05a4a')
+];
+const HERO_SWORD0 = [R(26,11,2,8,'#cfd6e6'), R(24,18,6,1,'#c99a2e'), R(26,19,2,3,'#6b4423')];
+const SWORD_COL = ['#d2d8e6','#6cc8ff','#ffd23f'], SWORD_LEN = [10,14,17];
+const SHIELD_COL = ['#a8743a','#6cc8ff','#ffd23f'], ARMOR_COL = ['#8a93a8','#4a9aee','#ffd23f'], BOOT_COL = ['#a8643a','#4fe08a','#ffd23f'];
+const FORM_OPS = {
+  hp: [
+    [E(10.5,17,3.2,2.6,'#3fb05f'), E(21.5,17,3.2,2.6,'#3fb05f'), E(16,19,2.3,2.3,'!#ff5a7a'), R(15,18,2,1,'!#ffd0da')],
+    [R(10,3,13,2,'#3fb05f'), R(15,1,3,3,'#3fb05f'), R(8,15,16,2,'#2f8f4a'), E(16,19,2.8,2.8,'!#ff5a7a'), R(15,18,2,1,'!#ffd0da')]
+  ],
+  atk: [
+    [R(3,15,5,2,'#e04040'), R(1,17,5,2,'#e04040'), R(17,5,3,2,'#ff7a30'), P(19,5,'!#fff0a0')],
+    [R(3,15,5,2,'#e04040'), R(1,17,5,2,'#e04040'), R(11,0,2,3,'#ff4a30'), R(19,0,2,3,'#ff4a30'), R(26,6,3,3,'#ff7a30'), R(27,4,1,3,'!#fff0a0'), R(25,8,1,2,'#ff4a30'), R(29,9,1,2,'#ff4a30')]
+  ],
+  def: [
+    [E(16,7,8,6,'#9aa7c0'), R(13,8,12,3,'!#1a2030'), R(9,8,2,6,'#9aa7c0')],
+    [E(16,7,8,6,'#b6c2da'), R(13,8,12,3,'!#1a2030'), R(9,8,2,6,'#b6c2da'), R(15,0,4,5,'#4a90ee'), R(11,16,10,7,'#b6c2da'), R(14,17,4,4,'#4a90ee')]
+  ],
+  spd: [
+    [R(2,11,5,3,'#ffe45a'), R(3,14,5,3,'#ffe45a'), R(4,17,4,2,'#ffe45a')],
+    [R(0,8,6,3,'#fff08a'), R(1,11,6,3,'#ffe45a'), R(2,14,6,3,'#ffe45a'), R(4,17,4,3,'#ffe45a'), R(25,8,4,2,'#fff08a'), P(2,5,'!#ffffff'), P(29,13,'!#ffffff')]
+  ],
+  all: [[R(11,0,10,3,'#ffd23f'), R(11,0,2,1,'#ffd23f'), P(12,-1,'#ffd23f'), P(16,0,'!#ff5050'), P(20,-1,'#ffd23f')], null]
+};
+function heroOps(form, owned){
+  let ops = HERO_BASE.slice();
+  if (form && form.key){
+    const fs = form.key.split('+').map(k => FORM_OPS[k]).filter(Boolean);
+    for (const f of fs) ops = ops.concat(f[0]);
+    if (form.lv >= 2) for (const f of fs) if (f[1]) ops = ops.concat(f[1]);
+  }
+  const o = owned || {};
+  if (o.shield) ops.push(R(3,17,7,10,SHIELD_COL[o.shield - 1]), R(4,18,5,8,hexMix(SHIELD_COL[o.shield - 1], '#000000', .35)), R(5,20,3,4,SHIELD_COL[o.shield - 1]));
+  if (o.armor) ops.push(R(11,16,10,7,ARMOR_COL[o.armor - 1]), R(9,16,3,3,ARMOR_COL[o.armor - 1]), R(20,16,3,3,ARMOR_COL[o.armor - 1]), R(14,18,4,1,'!#ffffff'));
+  if (o.boots) ops.push(R(10,27,5,3,BOOT_COL[o.boots - 1]), R(17,27,5,3,BOOT_COL[o.boots - 1]));
+  if (o.sword){ const L = SWORD_LEN[o.sword - 1], col = SWORD_COL[o.sword - 1]; ops.push(R(26,19 - L,2,L,col), R(25,19 - L - 1,4,1,hexMix(col,'#ffffff',.5)), R(24,18,6,1,'#c99a2e'), R(26,19,2,3,'#6b4423')); }
+  else ops = ops.concat(HERO_SWORD0);
+  return ops;
+}
+
+const _sprCache = {};
+function spriteSvg(key){ return _sprCache[key] || (_sprCache[key] = gridSvg(rasterize(ART[key]))); }
+function nameHash(n){ let h = 0; for (const c of n) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; }
+const FOE_MAP = {'ブルースライム':['e0',190],'ポイズンバット':['e2',90],'ロックガード':['e1',30],'ブルースケルトン':['e6',180],'アイアンゴーレム':['e1',200],'ダークマッシュ':['e3',280],'ブラッドヴァンプ':['e5',330],'キングオーガ':['e4',40],'ミラージュスライム':['e0',280],'ボーンナイト':['e6',0],'ナイトバット':['e2',240],'ストーンゴーレム':['e1',0],'ダークヴァンプ':['e5',0],'門番オーガ':['e4',200],'ポイズンマッシュ':['e3',90],'エルダースケルトン':['e6',60]};
+function dailySprite(name){ const m = FOE_MAP[name]; if (m) return {key:m[0], hue:m[1]}; const h = nameHash(name); return {key:'e' + (h % 8), hue:(h % 12) * 30}; }
+
+// ---------- ホーム ----------
+function showHome(){
+  stopTimer();
+  const prog = hasProgress();
+  const next = Math.min(save.cleared, STAGES.length - 1);
+  let h = `<div class="home"><h1 class="logo">割り振り<br>バトル</h1><div class="sub">ポイントを振り分けて、自動戦闘に勝て</div>`;
+  h += `<div class="homearena idle"><div class="fighter">${heroSvg(save.alloc)}</div><div class="fighter foe sil">${spriteSvg('e' + next)}<span class="qm">?</span></div></div>`;
+  h += `<button class="stage main" onclick="continueGame()" ${prog ? '' : 'disabled'}>▶ 続きから${prog ? ` <span class="small">(ステージ${Math.min(save.cleared + 1, STAGES.length)})</span>` : ''}</button>`;
+  h += `<button class="stage" onclick="newGame()">はじめから</button>`;
+  if (DAILY.length){
+    const t = todayInfo(), p = DAILY[t.idx], ds = dailyState();
+    h += `<button class="stage" onclick="showDaily()">📅 今日のデイリー #${t.no}<br><span class="small">縛り: ${RESTRICTIONS[p.r].name} / ${ds.best ? `今日の最高 ${starStr(ds.best.stars)} ${ds.best.used}pt` : '未クリア'}</span></button>`;
+  }
+  h += `<button class="stage" onclick="showShop()">🛒 ショップ <span class="small">🪙${save.medals}</span></button>`;
+  h += `<button class="stage" onclick="showAchs()">🏆 実績 <span class="small">${Object.keys(save.ach).length}/${ACH.length}</span></button>`;
+  h += `<p class="small"><button onclick="resetAll()">データ初期化</button></p><p class="small foot"><a href="about.html">遊び方・運営者情報</a> / <a href="privacy.html">プライバシーポリシー</a></p></div>`;
+  app.innerHTML = h;
+}
+function continueGame(){
+  if (save.cleared >= STAGES.length) showSelect(); else showAlloc(save.cleared);
+}
+function newGame(){
+  if (hasProgress() && !confirm('ステージ戦の進行状況を消して、最初から始めますか?\n(デイリーの記録は消えません)')) return;
+  save.cleared = 0; save.tries = STAGES.map(()=>0); save.best = STAGES.map(()=>null); save.alloc = newAlloc();
+  persist();
+  showAlloc(0);
+}
+function resetAll(){
+  if (confirm('すべてのセーブデータを消去しますか?')){ save = defaultSave(); persist(); showHome(); }
+}
+
+// ---------- 日付とデイリー状態 ----------
 function todayInfo(){
   const epoch = Math.floor(Date.UTC(2026, 9, 16) / 86400000);
   const d = Math.floor((Date.now() + 9 * 3600000) / 86400000) - epoch;
@@ -209,58 +504,152 @@ function todayInfo(){
 function dailyState(){
   const t = todayInfo();
   if (!save.daily || save.daily.day !== t.day){
-    save.daily = {day:t.day, tries:0, best:null, alloc:newAlloc()};
+    save.daily = {day:t.day, tries:0, best:null, alloc:newAlloc(), paid:0};
     persist();
   }
   return save.daily;
 }
 const starStr = (n) => '★'.repeat(n) + '☆'.repeat(3 - n);
 
+let pendingFx = null;
+const FX = {hp:['#3f6','+HP'], atk:['#ff5050','+攻撃'], def:['#4af','+防御'], spd:['#ff0','+速度'], skill:['#f0f','スキル!']};
+function setVar(el, name, val){ if (el && el.style && el.style.setProperty) el.style.setProperty(name, val); }
+function heroPanel(info){
+  const f = formInfo(panelAlloc);
+  return `<div class="heropanel"><div class="herobox" id="herobox">${heroSvg(panelAlloc)}<div id="herofx"></div></div><div class="heroinfo"><b>あなた</b> <span class="small form">${f.label}${f.lv ? ' Lv' + f.lv : ''}</span><br>${info}</div></div>`;
+}
+function fxPlay(){
+  const k = pendingFx; pendingFx = null;
+  if (!k || !FX[k]) return;
+  const box = $('herobox'), fx = $('herofx');
+  if (!box || !fx || !document.createElement) return;
+  box.className = 'herobox fx';
+  setVar(box, '--fx', FX[k][0]);
+  const t = document.createElement('div');
+  t.className = 'fxt'; t.textContent = FX[k][1];
+  fx.appendChild(t);
+  for (let n = 0; n < 6; n++){
+    const sp = document.createElement('div');
+    const ang = n * 60 * Math.PI / 180;
+    sp.className = 'spark';
+    setVar(sp, '--dx', Math.round(Math.cos(ang) * 36) + 'px');
+    setVar(sp, '--dy', Math.round(Math.sin(ang) * 36) + 'px');
+    fx.appendChild(sp);
+  }
+}
+
+let hintOpen = false, curView = 'stage';
+// ---- 広告の入口 ----
+// 承認後は ADS.enabled=true にして ADS.show の中身を Ad Placement API の呼び出しに置き換えるだけでよい
+const ADS = {
+  enabled: false,
+  show(onReward, onFail){ onFail && onFail(); } // 未接続: 常に失敗扱い(ボタン自体も出さない)
+};
+let adHintLv = 0, adHintKey = '';
+function hintKey(){ return curView === 'daily' ? 'd' + todayInfo().day : 's' + curStage; }
+function requestHintUnlock(){
+  if (!ADS.enabled) return;
+  ADS.show(() => { adHintLv = 2; adHintKey = hintKey(); hintOpen = true; if (curView === 'daily'){ const ds = dailyState(); ds.hinted = true; persist(); showDaily(); } else showAlloc(curStage); },
+           () => { alert('広告を読み込めませんでした。時間をおいて試してください'); });
+}
+function hintLevel(tries){
+  const byLoss = tries >= 6 ? 3 : tries >= 4 ? 2 : tries >= 2 ? 1 : 0;
+  return Math.max(byLoss, adHintKey === hintKey() ? adHintLv : 0);
+}
+function buildHint(sol, lv){
+  const a = sol.alloc;
+  const used = STATS.filter(k => (a[k] || 0) > 0).sort((x, y) => a[y] - a[x]);
+  const names = used.slice(0, 2).map(k => STAT_LABEL[k]);
+  if (lv === 1){
+    return `カギは「${names.join('」と「')}」。` + (sol.skills.length ? 'スキルも活用すると有利です。' : 'スキルなしでも勝てます。');
+  }
+  if (lv === 2){
+    const parts = used.map(k => `${STAT_LABEL[k]} ${Math.max(0, a[k] - 1)}〜${a[k] + 1}pt`);
+    return `ポイントの目安: ${parts.join(' / ')}<br>スキル: ${sol.skills.length ? sol.skills.length + '個(攻略に必要)' : '不要'}`;
+  }
+  const parts = STATS.map(k => `${STAT_LABEL[k]}+${a[k] || 0}`);
+  const sk = sol.skills.map(k => SKILLS[k].name).join('・') || 'なし';
+  return `答えの一例: ${parts.join(' ')} / スキル: ${sk}<br><span class="small">(合計${statSpent(a) + skillCost(sol.skills)}pt。余ったポイントは自由に使えます)</span>`;
+}
+function hintSection(tries, sol){
+  const lv = hintLevel(tries);
+  if (!sol) return '';
+  if (lv === 0) return `<div class="card hintcard"><b>💡 ヒント</b><div class="small">あと${2 - tries}回負けると、ヒントが解放されます</div>${ADS.enabled ? '<button onclick="requestHintUnlock()">🎬 広告を見てヒントを見る</button>' : ''}</div>`;
+  let h = `<div class="card hintcard"><b>💡 ヒント</b> <span class="small">(Lv${lv}/3・負けるほど具体的になります)</span>`;
+  if (hintOpen) h += `<div class="hint">${buildHint(sol, lv)}</div><button onclick="toggleHint()">ヒントを閉じる</button>`;
+  else h += `<br><button onclick="toggleHint()">ヒントを見る</button>`;
+  return h + '</div>';
+}
+function toggleHint(){
+  hintOpen = !hintOpen;
+  if (curView === 'daily'){
+    if (hintOpen){ const ds = dailyState(); ds.hinted = true; persist(); }
+    showDaily();
+  } else showAlloc(curStage);
+}
+function diagnose(res, pu, eu){
+  const last = res.log[res.log.length - 1];
+  const left = last.ehp / eu.maxhp;
+  const myDmg = Math.max(Math.ceil(pu.atk * 0.25), pu.atk - eu.def);
+  const enDmg = Math.max(Math.ceil(eu.atk * 0.25), eu.atk - pu.def);
+  const hitsToDie = Math.ceil(pu.maxhp / enDmg);
+  const pct = Math.round(100 * myDmg / eu.maxhp);
+  const tips = [];
+  if (last.msg.indexOf('時間切れ') >= 0) tips.push('時間切れでした。1回の攻撃が軽いか、動く回数が足りません。');
+  else if (left <= 0.25) tips.push(`あと少し!敵のHPを${Math.round(left * 100)}%残して負けました。攻撃か速度を1〜2pt足そう。`);
+  else {
+    if (hitsToDie <= 3) tips.push(`敵の1撃が重く、${hitsToDie}発で倒れます。防御かHPを増やす、または速度を上げて先に倒そう。`);
+    if (pct < 6) tips.push(`あなたの1撃は敵HPの約${pct}%しか削れません。攻撃を上げるか、貫通・強打を試そう。`);
+    if (pu.spd < eu.spd * 0.7) tips.push('相手の動く回数が多すぎます。速度を上げる手もあります。');
+  }
+  if (!tips.length) tips.push('スキルを1つ足すと流れが変わるかもしれません。');
+  return tips.slice(0, 2).join('<br>');
+}
+
+// ---------- ステージ選択 ----------
 function showSelect(){
   stopTimer();
-  let h = `<h1>割り振りバトル</h1><div class="sub">ポイントを振り分けて、自動戦闘に勝て</div>`;
-  if (DAILY.length){
-    const t = todayInfo(), p = DAILY[t.idx], ds = dailyState();
-    const st = ds.best ? `今日の最高 ${starStr(ds.best.stars)} ${ds.best.used}pt` : '未クリア';
-    h += `<button class="stage main" onclick="showDaily()">📅 今日のデイリー #${t.no}<br><span class="small">縛り: ${RESTRICTIONS[p.r].name} / ${st}</span></button>`;
-  }
-  h += `<div class="card">ステージ戦 総ポイント <span class="pts">${totalPts()}</span>(クリアごとに+${CLEAR_BONUS})</div>`;
+  let h = `<h1>ステージ選択</h1><div class="sub">前のボスを倒すと、次の敵が判明する</div>`;
+  h += `<div class="card">総ポイント <span class="pts">${totalPts()}</span>(クリアごとに+${CLEAR_BONUS})</div>`;
   STAGES.forEach((s,i)=>{
     const locked = i > save.cleared;
     const done = i < save.cleared;
     const best = save.best[i] ? ` / 最短${save.best[i]}回` : '';
-    h += `<button class="stage" ${locked?'disabled':''} onclick="showAlloc(${i})">${done?'★ ':''}${s.name}${best}${locked?' 🔒':''}</button>`;
+    const label = locked ? '？？？' : s.name;
+    h += `<button class="stage" ${locked?'disabled':''} onclick="showAlloc(${i})"><span class="mini ${locked?'sil':''}">${spriteSvg('e' + i)}</span>${done?'★ ':''}${label}${locked?' 🔒':best}</button>`;
   });
   if (save.cleared >= STAGES.length) h += `<div class="card win">全ステージクリア!おめでとう</div>`;
-  h += `<p class="small"><button onclick="resetAll()">データ初期化</button></p>`;
+  h += `<p><button onclick="showHome()">ホームへ</button></p>`;
   app.innerHTML = h;
-}
-function resetAll(){
-  if (confirm('セーブデータを消去しますか?')){ save = defaultSave(); persist(); showSelect(); }
 }
 
 // ---------- 共通 ----------
 function skillLabel(list){ return list.length ? list.map(k=>SKILLS[k].name).join('・') : 'なし'; }
-function enemyCard(name, st, skills, hint){
-  return `<div class="card"><b>敵情報: ${name}</b><br>HP ${st.hp} / 攻撃 ${st.atk} / 防御 ${st.def} / 速度 ${st.spd}<br>スキル: ${skillLabel(skills)}${hint ? `<div class="hint">💡 ${hint}</div>` : ''}</div>`;
+function enemyCard(name, st, skills, hint, key, hue){
+  return `<div class="card"><span class="mini big foe" style="--hue:${hue || 0}deg">${spriteSvg(key)}</span><b>敵情報: ${name}</b><br>HP ${st.hp} / 攻撃 ${st.atk} / 防御 ${st.def} / 速度 ${st.spd}<br>スキル: ${skillLabel(skills)}${hint ? `<div class="hint">💡 ${hint}</div>` : ''}</div>`;
 }
 
 // ---------- ステージ戦: 割り振り ----------
 let curStage = 0;
 function showAlloc(i){
+  if (i > save.cleared) i = save.cleared;
+  if (curView !== 'stage' || curStage !== i) hintOpen = false;
+  curView = 'stage';
   curStage = i;
   stopTimer();
   const st = STAGES[i];
   const a = save.alloc;
-  const ps = playerStats(a);
+  const eb = equipBonus(), ps = stageStats(a);
+  trackForm(a);
   const rem = remainPts();
   let h = `<h1>${st.name}</h1>`;
-  h += enemyCard(st.name.replace(/^\d+\.\s*/,''), st.stats, st.skills, st.hint);
-  h += `<div class="card"><b>あなた</b>  残りポイント <span class="pts">${rem}</span> / ${totalPts()}`;
+  h += enemyCard(st.name.replace(/^\d+\.\s*/,''), st.stats, st.skills, st.hint, 'e' + i, 0);
+  h += `<div class="card statcard">${heroPanel(`残りポイント <span class="pts">${rem}</span> / ${totalPts()}<br><span class="small">行動頻度: 相手の${(ps.spd / st.stats.spd).toFixed(1)}倍</span>`)}`;
+  h += `<button class="resetbtn" onclick="resetAlloc();showAlloc(${i})">振り直し</button>`;
   STATS.forEach(k=>{
     h += `<div class="row"><span class="lbl">${STAT_LABEL[k]}</span>
       <button class="pm" onclick="adj('${k}',-1)" ${a[k]<=0?'disabled':''}>−</button>
-      <span class="val">${ps[k]} <span class="small">(+${a[k]})</span></span>
+      <span class="val">${ps[k]} <span class="small">(+${a[k]}${eb[k] ? ' 装備+' + eb[k] : ''})</span></span>
       <button class="pm" onclick="adj('${k}',1)" ${rem<=0?'disabled':''}>＋</button></div>`;
   });
   h += `</div><div class="card"><b>スキル</b> (${a.skills.length}/${SLOTS}枠)`;
@@ -270,35 +659,44 @@ function showAlloc(i){
     h += `<button class="skill ${on?'on':''}" ${can?'':'disabled'} onclick="toggleSkill('${k}')">${SKILLS[k].name}(${SKILLS[k].cost}pt) ${SKILLS[k].desc}</button>`;
   });
   h += `</div>`;
-  h += `<button class="main" onclick="startBattle()">戦闘開始</button><button onclick="resetAlloc();showAlloc(${i})">振り直し</button><button onclick="showSelect()">戻る</button>`;
+  h += itemCard();
+  h += hintSection(save.tries[i], STAGE_SOLS[i]);
+  h += `<button class="main" onclick="startBattle()">戦闘開始</button><button onclick="showSelect()">戻る</button>`;
   h += `<p class="small">これまでの挑戦: ${save.tries[i]}回</p>`;
   app.innerHTML = h;
+  fxPlay();
 }
 function adj(k, d){
   const a = save.alloc;
   if (d > 0 && remainPts() <= 0) return;
   if (d < 0 && a[k] <= 0) return;
+  if (d > 0) pendingFx = k;
   a[k] += d; persist(); showAlloc(curStage);
 }
 function toggleSkill(k){
   const a = save.alloc;
   const idx = a.skills.indexOf(k);
   if (idx >= 0) a.skills.splice(idx,1);
-  else if (a.skills.length < SLOTS && remainPts() >= SKILLS[k].cost) a.skills.push(k);
+  else if (a.skills.length < SLOTS && remainPts() >= SKILLS[k].cost){ a.skills.push(k); pendingFx = 'skill'; }
   persist(); showAlloc(curStage);
 }
 
 // ---------- デイリー: 割り振り ----------
 function showDaily(){
   stopTimer();
+  if (curView !== 'daily') hintOpen = false;
+  curView = 'daily';
   const t = todayInfo(), p = DAILY[t.idx], ds = dailyState();
   const a = ds.alloc, ps = playerStats(a);
+  trackForm(a);
   const used = statSpent(a) + skillCost(a.skills);
   const slots = restrictionSlots(p.r);
+  const sp = dailySprite(p.name);
   let h = `<h1>デイリー #${t.no}</h1>`;
   h += `<div class="card"><span class="rule">縛り: ${RESTRICTIONS[p.r].name}</span><br>ルール: 使うポイントが<b>少ないほど高評価</b>(★★★=最少ポイント)</div>`;
-  h += enemyCard(p.name, p.stats, p.skills, '');
-  h += `<div class="card"><b>あなた</b>  使用ポイント <span class="pts">${used}</span> / 上限${DAILY_CAP}`;
+  h += enemyCard(p.name, p.stats, p.skills, '', sp.key, sp.hue);
+  h += `<div class="card statcard">${heroPanel(`使用ポイント <span class="pts">${used}</span> / 上限${DAILY_CAP}<br><span class="small">行動頻度: 相手の${(ps.spd / p.stats.spd).toFixed(1)}倍</span>`)}`;
+  h += `<button class="resetbtn" onclick="resetD()">振り直し</button>`;
   STATS.forEach(k=>{
     const blocked = restrictionBlocked(p.r, k);
     h += `<div class="row"><span class="lbl">${STAT_LABEL[k]}</span>
@@ -314,15 +712,18 @@ function showDaily(){
     h += `<button class="skill ${on?'on':''}" ${can?'':'disabled'} onclick="toggleSkillD('${k}')">${SKILLS[k].name}(${SKILLS[k].cost}pt) ${SKILLS[k].desc}</button>`;
   });
   h += `</div>`;
-  h += `<button class="main" onclick="startDailyBattle()">戦闘開始</button><button onclick="resetD()">振り直し</button><button onclick="showSelect()">戻る</button>`;
+  h += hintSection(ds.tries, p.sol);
+  h += `<button class="main" onclick="startDailyBattle()">戦闘開始</button><button onclick="showHome()">戻る</button>`;
   h += `<p class="small">今日の挑戦: ${ds.tries}回${ds.best ? ` / 最高 ${starStr(ds.best.stars)} ${ds.best.used}pt` : ''}</p>`;
   app.innerHTML = h;
+  fxPlay();
 }
 function adjD(k, d){
   const t = todayInfo(), p = DAILY[t.idx], a = dailyState().alloc;
   const used = statSpent(a) + skillCost(a.skills);
   if (d > 0 && (restrictionBlocked(p.r, k) || used >= DAILY_CAP)) return;
   if (d < 0 && a[k] <= 0) return;
+  if (d > 0) pendingFx = k;
   a[k] += d; persist(); showDaily();
 }
 function toggleSkillD(k){
@@ -330,41 +731,86 @@ function toggleSkillD(k){
   const used = statSpent(a) + skillCost(a.skills);
   const idx = a.skills.indexOf(k);
   if (idx >= 0) a.skills.splice(idx,1);
-  else if (a.skills.length < restrictionSlots(p.r) && used + SKILLS[k].cost <= DAILY_CAP) a.skills.push(k);
+  else if (a.skills.length < restrictionSlots(p.r) && used + SKILLS[k].cost <= DAILY_CAP){ a.skills.push(k); pendingFx = 'skill'; }
   persist(); showDaily();
 }
 function resetD(){ dailyState().alloc = newAlloc(); persist(); showDaily(); }
 
 // ---------- 戦闘(共通) ----------
-function runBattle(titleHtml, pu, eu, res, resultHtml, controlsHtml){
+function setFighter(side, c){
+  const el = $('f' + side);
+  if (!el) return;
+  let cls = 'fighter' + (side === 'e' ? ' foe' : '');
+  if (c === 'lunge') cls += ' lunge-' + side;
+  else if (c) cls += ' ' + c;
+  el.className = cls;
+}
+function floatText(side, text, cls){
+  const fx = $('fx');
+  if (!fx || !document.createElement) return;
+  const d = document.createElement('div');
+  d.className = 'fl ' + cls;
+  d.textContent = text;
+  d.style.left = side === 'p' ? '20%' : '64%';
+  fx.appendChild(d);
+  setTimeout(() => { if (d.remove) d.remove(); }, 900);
+}
+function animateEvent(e){
+  if (e.kind === 'hit'){
+    const a = e.side, d = a === 'p' ? 'e' : 'p';
+    setFighter(a, 'lunge');
+    if (e.label && e.label !== '攻撃') floatText(a, e.label + '!', 'skill');
+    setTimeout(() => {
+      setFighter(a, '');
+      setFighter(d, 'hurt');
+      floatText(d, '-' + e.dmg, 'dmg');
+      setTimeout(() => setFighter(d, ''), 320);
+    }, 190);
+  } else if (e.kind === 'heal'){
+    floatText(e.side, '+' + e.amt, 'heal');
+  }
+}
+function runBattle(titleHtml, pu, eu, res, resultHtml, controlsHtml, eKey, eHue){
   let h = titleHtml;
   h += `<div>あなた <span id="php">${pu.hp}</span>/${pu.maxhp}</div><div class="bar"><i id="pbar" style="width:100%"></i></div>`;
   h += `<div>${eu.name} <span id="ehp">${eu.hp}</span>/${eu.maxhp}</div><div class="bar e"><i id="ebar" style="width:100%"></i></div>`;
+  h += `<div id="arena"><div class="fighter" id="fp">${heroSvg(panelAlloc)}</div><div class="fighter foe" id="fe" style="--hue:${eHue || 0}deg">${spriteSvg(eKey)}</div><div id="fx"></div></div>`;
   h += `<div id="log"></div><div id="result"></div><div id="ctrl"><button onclick="skipBattle()">スキップ</button></div>`;
   app.innerHTML = h;
-  let idx = 0;
+  let idx = 0, fast = false, finished = false;
   const step = () => {
     if (idx >= res.log.length){ finish(); return; }
-    const e = res.log[idx++];
+    let e;
     const lg = $('log');
-    lg.innerHTML += e.msg + '<br>';
+    do {
+      e = res.log[idx++];
+      lg.innerHTML += e.msg + '<br>';
+    } while (e.kind === 'turn' && idx < res.log.length);
     lg.scrollTop = lg.scrollHeight;
     $('php').textContent = e.php; $('ehp').textContent = e.ehp;
     $('pbar').style.width = (100 * e.php / pu.maxhp) + '%';
     $('ebar').style.width = (100 * e.ehp / eu.maxhp) + '%';
+    if (!fast) animateEvent(e);
   };
   const finish = () => {
+    if (finished) return;
+    finished = true;
     stopTimer();
+    setFighter(res.win ? 'e' : 'p', 'dead');
     $('result').innerHTML = `<div class="card">${resultHtml}</div>`;
     $('ctrl').innerHTML = controlsHtml;
   };
-  window.skipBattle = () => { while (idx < res.log.length) step(); finish(); };
-  timer = setInterval(step, 450);
+  window.skipBattle = () => { fast = true; while (idx < res.log.length) step(); finish(); };
+  timer = setInterval(step, Math.max(140, Math.min(560, Math.floor(14000 / Math.max(1, res.log.length)))));
 }
 
 function startBattle(){
   const i = curStage, st = STAGES[i];
-  const pu = makeUnit('あなた', playerStats(save.alloc), save.alloc.skills);
+  const bs = stageStats(save.alloc);
+  const usedHp = save.armed.hpup && save.items.hpup > 0, usedAtk = save.armed.atkup && save.items.atkup > 0;
+  if (usedHp) bs.hp = Math.floor(bs.hp * 1.25);
+  if (usedAtk) bs.atk = Math.ceil(bs.atk * 1.25);
+  const pu = makeUnit('あなた', bs, save.alloc.skills);
   const eu = makeUnit(st.name.replace(/^\d+\.\s*/,''), st.stats, st.skills);
   const res = simulate(pu, eu);
   save.tries[i]++;
@@ -374,15 +820,25 @@ function startBattle(){
     if (i === save.cleared){ save.cleared++; firstClear = true; }
     save.tries[i] = 0;
     resultHtml = `<div class="win">勝利! ${tries}回目で突破</div>` + (firstClear ? `<div class="pts">+${CLEAR_BONUS}pt 獲得(総${totalPts()}pt)</div>` : '');
+    if (firstClear && i + 1 < STAGES.length) resultHtml += `<div class="hint">次の敵が判明した…</div>`;
   } else {
-    resultHtml = `<div class="lose">敗北… (挑戦${tries}回目)</div><div class="small">割り振りを見直して再挑戦しよう</div>`;
+    resultHtml = `<div class="lose">敗北… (挑戦${tries}回目)</div><div class="hint">💡 ${diagnose(res, pu, eu)}</div>`;
   }
+  if (usedHp){ save.items.hpup--; save.armed.hpup = false; }
+  if (usedAtk){ save.items.atkup--; save.armed.atkup = false; }
+  if (usedHp || usedAtk) resultHtml += `<div class="small">アイテムを使用しました</div>`;
+  if (res.win){
+    const g = firstClear ? 10 + 5 * i : 3;
+    addMedals(g); save.st.wins++;
+    resultHtml += `<div class="pts">🪙 +${g}${firstClear ? '(初クリア)' : ''}</div>`;
+  } else save.st.losses++;
+  resultHtml += achHtml(checkAch());
   persist();
   let c = '';
   if (res.win && i + 1 < STAGES.length) c += `<button class="main" onclick="showAlloc(${i+1})">次のステージ</button>`;
   if (!res.win) c += `<button class="main" onclick="showAlloc(${i})">振り直して再挑戦</button>`;
   c += `<button onclick="showSelect()">ステージ選択</button>`;
-  runBattle(`<h1>${st.name}</h1>`, pu, eu, res, resultHtml, c);
+  runBattle(`<h1>${st.name}</h1>`, pu, eu, res, resultHtml, c, 'e' + i, 0);
 }
 
 let shareText = '';
@@ -404,24 +860,193 @@ function startDailyBattle(){
   const eu = makeUnit(p.name, p.stats, p.skills);
   const res = simulate(pu, eu);
   ds.tries++;
-  let resultHtml;
+  let resultHtml, rewardHtml = '';
   if (res.win){
     const stars = used <= p.par ? 3 : (used <= p.par + 3 ? 2 : 1);
     if (!ds.best || used < ds.best.used) ds.best = {used, stars, tries:ds.tries};
     const b = ds.best;
-    shareText = `割り振りバトル デイリー#${t.no} ${starStr(b.stars)} ${b.used}pt(${b.tries}回目)\n縛り:${RESTRICTIONS[p.r].name}\n${SITE_URL}`;
+    const PAY = {1:10, 2:20, 3:35};
+    const prev = ds.paid || 0, target = PAY[b.stars], gain = Math.max(0, target - prev);
+    let bonus = 0;
+    if (prev === 0){
+      const S = save.st;
+      S.streak = (S.lastDailyDay === t.day - 1) ? S.streak + 1 : 1;
+      S.maxStreak = Math.max(S.maxStreak, S.streak);
+      S.lastDailyDay = t.day; S.dailyClears++;
+      bonus = Math.min(S.streak, 7) * 3;
+    }
+    if (b.stars === 3 && !ds.perfectCounted){
+      ds.perfectCounted = true; save.st.dailyPerfect++;
+      if (!ds.hinted) save.st.nohintPerfect++;
+    }
+    ds.paid = Math.max(prev, target);
+    if (gain + bonus > 0){
+      addMedals(gain + bonus);
+      rewardHtml = `<div class="pts">🪙 +${gain + bonus}${bonus ? `(連続${save.st.streak}日ボーナス+${bonus}含む)` : ''}</div>`;
+    }
+    shareText = `割り振りバトル デイリー#${t.no} ${starStr(b.stars)} ${b.used}pt(${b.tries}回目)${ds.hinted ? ' 💡ヒントあり' : ''}\n縛り:${RESTRICTIONS[p.r].name}\n${SITE_URL}`;
     resultHtml = `<div class="win">勝利! <span class="star">${starStr(stars)}</span> ${used}pt</div>`
       + (stars === 3 ? `<div class="pts">パーフェクト!最少ポイントで突破</div>` : `<div class="small">もっと少ないポイントで勝てる振り方があります</div>`)
       + `<pre>${shareText}</pre><button id="copybtn" onclick="copyShare()">結果をコピー</button>`;
   } else {
-    resultHtml = `<div class="lose">敗北… (今日の挑戦${ds.tries}回目)</div><div class="small">縛りの中で振り方を見直そう</div>`;
+    resultHtml = `<div class="lose">敗北… (今日の挑戦${ds.tries}回目)</div><div class="hint">💡 ${diagnose(res, pu, eu)}</div>`;
   }
+  resultHtml += rewardHtml + achHtml(checkAch());
   persist();
-  const c = `<button class="main" onclick="showDaily()">割り振りに戻る</button><button onclick="showSelect()">トップへ</button>`;
-  runBattle(`<h1>デイリー #${t.no}</h1>`, pu, eu, res, resultHtml, c);
+  const c = `<button class="main" onclick="showDaily()">割り振りに戻る</button><button onclick="showHome()">ホームへ</button>`;
+  const sp = dailySprite(p.name);
+  runBattle(`<h1>デイリー #${t.no}</h1>`, pu, eu, res, resultHtml, c, sp.key, sp.hue);
 }
 
-if (typeof document !== 'undefined' && document.getElementById('app')) showSelect();
+// ---------- メダル・ショップ・実績・見た目の進化 ----------
+let panelAlloc = newAlloc();
+const EQUIP = {
+  sword:  {name:'剣', stat:'atk', tiers:[{n:'鉄の剣', v:1, c:30}, {n:'蒼の剣', v:2, c:80}, {n:'金の剣', v:4, c:160}]},
+  shield: {name:'盾', stat:'def', tiers:[{n:'木の盾', v:1, c:30}, {n:'蒼の盾', v:2, c:80}, {n:'金の盾', v:3, c:160}]},
+  armor:  {name:'鎧', stat:'hp',  tiers:[{n:'革の鎧', v:5, c:30}, {n:'蒼の鎧', v:10, c:80}, {n:'金の鎧', v:18, c:160}]},
+  boots:  {name:'靴', stat:'spd', tiers:[{n:'革の靴', v:1, c:50}, {n:'蒼の靴', v:2, c:120}, {n:'金の靴', v:3, c:220}]}
+};
+const ITEMS = {
+  hpup:  {name:'HPポーション', desc:'次の戦闘のHP+25%', c:15},
+  atkup: {name:'パワーチップ', desc:'次の戦闘の攻撃+25%', c:15}
+};
+function equipBonus(){
+  const b = {hp:0, atk:0, def:0, spd:0};
+  for (const k of Object.keys(EQUIP)){ const t = save.owned[k]; if (t > 0) b[EQUIP[k].stat] += EQUIP[k].tiers[t - 1].v; }
+  return b;
+}
+function stageStats(a){
+  const s = playerStats(a), b = equipBonus();
+  for (const k of STATS) s[k] += b[k];
+  return s;
+}
+function addMedals(n){ save.medals += n; save.st.medalsTotal += n; }
+
+const FORMS = {hp:'アーマー型', atk:'ブレード型', def:'シールド型', spd:'ウィング型', all:'オールラウンド型'};
+const FORM_COL = {hp:'#3f6', atk:'#f55', def:'#4af', spd:'#ff0', all:'#fd0'};
+const COMBO = {'hp+atk':'バーサーカー型', 'hp+def':'ガーディアン型', 'hp+spd':'レンジャー型', 'atk+def':'ナイト型', 'atk+spd':'アサシン型', 'def+spd':'ウィンドナイト型'};
+function formInfo(a){
+  const sp = statSpent(a);
+  const novice = {key:null, lv:0, label:'見習い'};
+  if (sp < 4) return novice;
+  const arr = STATS.map(k => [k, a[k] || 0]).sort((x, y) => (y[1] - x[1]) || (STATS.indexOf(x[0]) - STATS.indexOf(y[0])));
+  const s1 = arr[0][1] / sp, s2 = arr[1][1] / sp, big = sp >= 6;
+  if (s2 >= 0.3 && s1 + s2 >= 0.7){
+    const key = [arr[0][0], arr[1][0]].sort((x, y) => STATS.indexOf(x) - STATS.indexOf(y)).join('+');
+    return {key, lv:(s1 + s2 >= 0.9 && big) ? 2 : 1, label:COMBO[key]};
+  }
+  if (s1 >= 0.4) return {key:arr[0][0], lv:(s1 >= 0.6 && big) ? 2 : 1, label:FORMS[arr[0][0]]};
+  if (sp >= 8 && STATS.every(k => a[k] / sp >= 0.15)) return {key:'all', lv:1, label:FORMS.all};
+  return novice;
+}
+function heroSvg(a){
+  const f = formInfo(a || newAlloc());
+  const glow = f.lv >= 2 ? ` style="filter:drop-shadow(0 0 3px ${FORM_COL[f.key.split('+')[0]]})"` : '';
+  return gridSvg(rasterize(heroOps(f, save.owned)), glow);
+}
+function trackForm(a){
+  panelAlloc = a;
+  const f = formInfo(a);
+  let ch = false;
+  if (f.key && !save.forms[f.key]){ save.forms[f.key] = true; ch = true; }
+  if (f.lv >= 2 && !save.forms.lv2){ save.forms.lv2 = true; ch = true; }
+  if (ch){ const n = checkAch(); persist(); toastAch(n); }
+}
+
+const ACH = [
+  {id:'w1',  name:'初勝利',          d:'ステージ戦で初めて勝つ', r:10, ok:s => s.st.wins >= 1},
+  {id:'c4',  name:'中盤突破',        d:'ステージ4をクリア', r:20, ok:s => s.cleared >= 4},
+  {id:'c8',  name:'魔王を超えて',  d:'全ステージクリア', r:50, ok:s => s.cleared >= 8},
+  {id:'w20', name:'歴戦の勇者',      d:'ステージ戦で通算20勝', r:30, ok:s => s.st.wins >= 20},
+  {id:'l10', name:'不屈',            d:'通算10回負けても諦めない', r:15, ok:s => s.st.losses >= 10},
+  {id:'d1',  name:'デイリーデビュー', d:'デイリーを初クリア', r:10, ok:s => s.st.dailyClears >= 1},
+  {id:'dp',  name:'完璧主義',        d:'デイリーで★3を取る', r:20, ok:s => s.st.dailyPerfect >= 1},
+  {id:'dp10',name:'最少ポイントの鬼', d:'デイリーで★3を10回取る', r:60, ok:s => s.st.dailyPerfect >= 10},
+  {id:'nh',  name:'実力で',          d:'ヒントなしでデイリー★3', r:25, ok:s => s.st.nohintPerfect >= 1},
+  {id:'s3',  name:'三日坊主じゃない', d:'デイリーを3日連続クリア', r:20, ok:s => s.st.maxStreak >= 3},
+  {id:'s7',  name:'一週間の習慣',    d:'デイリーを7日連続クリア', r:50, ok:s => s.st.maxStreak >= 7},
+  {id:'b1',  name:'初めての買い物',  d:'ショップで何か買う', r:5, ok:s => s.st.bought >= 1},
+  {id:'l2',  name:'覚醒',            d:'見た目がLv2に進化する(1つに6割以上、または2つで9割以上)', r:20, ok:s => !!s.forms.lv2},
+  {id:'fm',  name:'形態コンプリート', d:'5種類の形態をすべて見る', r:40, ok:s => ['hp','atk','def','spd','all'].every(k => s.forms[k])},
+  {id:'fm2', name:'変幻自在',       d:'組み合わせ形態6種をすべて見る', r:80, ok:s => Object.keys(COMBO).every(k => s.forms[k])},
+  {id:'eq',  name:'装備マスター',    d:'装備4種を最大まで強化', r:100, ok:s => Object.keys(EQUIP).every(k => s.owned[k] >= 3)},
+  {id:'m500',name:'メダルコレクター', d:'メダルを通算500枚集める', r:50, ok:s => s.st.medalsTotal >= 500}
+];
+function checkAch(){
+  const out = [];
+  let again = true;
+  while (again){
+    again = false;
+    for (const a of ACH){
+      if (!save.ach[a.id] && a.ok(save)){ save.ach[a.id] = true; addMedals(a.r); out.push(a); again = true; }
+    }
+  }
+  return out;
+}
+function achHtml(list){ return list.map(a => `<div class="ach">🏆 実績解除「${a.name}」 🪙+${a.r}</div>`).join(''); }
+function toastAch(list){
+  if (!list.length || typeof document === 'undefined' || !document.createElement || !document.body) return;
+  const d = document.createElement('div');
+  d.className = 'toast';
+  d.innerHTML = achHtml(list);
+  document.body.appendChild(d);
+  setTimeout(() => { if (d.remove) d.remove(); }, 2800);
+}
+
+function showShop(){
+  stopTimer();
+  panelAlloc = save.alloc;
+  let h = `<h1>🛒 ショップ</h1><div class="card">所持メダル <span class="pts">🪙${save.medals}</span><br><span class="small">装備の能力アップはステージ戦のみ有効(デイリーは公平のため無効)。見た目は両方に反映されます。</span></div>`;
+  h += `<div class="card">${heroPanel('装備と進化がここに反映されます')}</div>`;
+  Object.keys(EQUIP).forEach(k => {
+    const e = EQUIP[k], t = save.owned[k], nx = e.tiers[t];
+    h += `<div class="card"><b>${e.name}</b> ${t ? `${e.tiers[t - 1].n}(${STAT_LABEL[e.stat]}+${e.tiers[t - 1].v})` : '<span class="small">未所持</span>'}<br>`;
+    h += nx ? `<button ${save.medals >= nx.c ? '' : 'disabled'} onclick="buyEquip('${k}')">${nx.n} ${STAT_LABEL[e.stat]}+${nx.v} — 🪙${nx.c}</button>` : `<span class="small">最大まで強化済み</span>`;
+    h += `</div>`;
+  });
+  h += `<div class="card"><b>消耗アイテム</b> <span class="small">(ステージ戦の割り振り画面で「使う」を選ぶ)</span>`;
+  Object.keys(ITEMS).forEach(k => {
+    const it = ITEMS[k];
+    h += `<br>${it.name} ×${save.items[k]} <span class="small">${it.desc}</span><br><button ${save.medals >= it.c ? '' : 'disabled'} onclick="buyItem('${k}')">買う — 🪙${it.c}</button>`;
+  });
+  h += `</div><button onclick="showHome()">ホームへ</button>`;
+  app.innerHTML = h;
+}
+function buyEquip(k){
+  const e = EQUIP[k], nx = e.tiers[save.owned[k]];
+  if (!nx || save.medals < nx.c) return;
+  save.medals -= nx.c; save.owned[k]++; save.st.bought++;
+  const n = checkAch(); persist(); showShop(); toastAch(n);
+}
+function buyItem(k){
+  const it = ITEMS[k];
+  if (save.medals < it.c) return;
+  save.medals -= it.c; save.items[k]++; save.st.bought++;
+  const n = checkAch(); persist(); showShop(); toastAch(n);
+}
+function itemCard(){
+  const ks = Object.keys(ITEMS).filter(k => save.items[k] > 0);
+  if (!ks.length) return '';
+  let h = `<div class="card"><b>アイテム</b>`;
+  ks.forEach(k => {
+    const on = save.armed[k];
+    h += `<button class="skill ${on ? 'on' : ''}" onclick="toggleArm('${k}')">${ITEMS[k].name} ×${save.items[k]} ${ITEMS[k].desc}${on ? ' 【使用予定】' : ''}</button>`;
+  });
+  return h + `</div>`;
+}
+function toggleArm(k){ if (save.items[k] > 0){ save.armed[k] = !save.armed[k]; persist(); showAlloc(curStage); } }
+function showAchs(){
+  stopTimer();
+  let h = `<h1>🏆 実績</h1><div class="card">${Object.keys(save.ach).length} / ${ACH.length} 解除 ・ 🪙${save.medals}</div>`;
+  ACH.forEach(a => {
+    const on = !!save.ach[a.id];
+    h += `<div class="card ${on ? 'win' : ''}">${on ? '✅' : '🔒'} <b>${a.name}</b> <span class="small">🪙+${a.r}</span><br><span class="small">${a.d}</span></div>`;
+  });
+  h += `<button onclick="showHome()">ホームへ</button>`;
+  app.innerHTML = h;
+}
+
+if (typeof document !== 'undefined' && document.getElementById('app')) showHome();
 </script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "56f48b43977249c99fff0b0864b247a9"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
